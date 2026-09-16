@@ -3,157 +3,10 @@
 import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { BrandLogo } from "./components/brand-logo";
-
-// ── DESIGN TOKENS ──────────────────────────────────────────────
-const C = {
-  bg: "#f4f6fb",
-  surface: "#ffffff",
-  card: "#ffffff",
-  border: "rgba(0,0,0,0.08)",
-  primary: "#4f7cff",
-  secondary: "#00b896",
-  amber: "#f59e0b",
-  pink: "#f43f8e",
-  text: "#111827",
-  muted: "#6b7280",
-  glow: "rgba(79,124,255,0.18)",
-} as const;
-
-// Smooth "ease-out-expo"-style curve used for hover/lift micro-interactions.
-const EASE = "cubic-bezier(0.16,1,0.3,1)";
-
-// Frosted-glass surface for cards — keeps the brand palette but adds depth
-// against the ambient gradient orbs behind it.
-const GLASS: React.CSSProperties = {
-  background: "rgba(255,255,255,0.72)",
-  backdropFilter: "blur(20px) saturate(180%)",
-  WebkitBackdropFilter: "blur(20px) saturate(180%)",
-  boxShadow: "0 1px 2px rgba(16,24,40,0.04), 0 16px 40px -12px rgba(16,24,40,0.10), inset 0 1px 0 rgba(255,255,255,0.6)",
-};
-
-// ── REUSABLE COMPONENTS ────────────────────────────────────────
-
-function Btn({
-  children,
-  variant = "primary",
-  disabled = false,
-  block = false,
-  size = "md",
-  onClick,
-  href,
-}: {
-  children: React.ReactNode;
-  variant?: "primary" | "ghost" | "outline" | "disabled";
-  disabled?: boolean;
-  block?: boolean;
-  size?: "sm" | "md" | "lg";
-  onClick?: () => void;
-  href?: string;
-}) {
-  const base: React.CSSProperties = {
-    fontFamily: "inherit",
-    fontWeight: 600,
-    borderRadius: 10,
-    border: "none",
-    cursor: disabled ? "not-allowed" : "pointer",
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-    transition: `all 0.25s ${EASE}`,
-    width: block ? "100%" : undefined,
-    padding: size === "lg" ? "14px 28px" : size === "sm" ? "7px 14px" : "10px 20px",
-    fontSize: size === "lg" ? 16 : size === "sm" ? 13 : 14,
-    textDecoration: "none",
-  };
-  const styles: Record<string, React.CSSProperties> = {
-    primary: {
-      ...base,
-      background: `linear-gradient(135deg, ${C.primary}, #3d63e0)`,
-      color: "#fff",
-      boxShadow: `0 4px 18px ${C.glow}, inset 0 1px 0 rgba(255,255,255,0.25)`,
-    },
-    ghost: { ...base, background: "transparent", color: C.muted, border: `1px solid ${C.border}` },
-    outline: { ...base, background: "transparent", color: C.text, border: `1.5px solid rgba(0,0,0,0.15)` },
-    disabled: { ...base, background: "rgba(0,0,0,0.05)", color: "rgba(0,0,0,0.25)", border: `1px solid rgba(0,0,0,0.08)`, cursor: "not-allowed" },
-  };
-  const classNames: Record<string, string> = {
-    primary: "btn btn-primary",
-    ghost: "btn btn-ghost",
-    outline: "btn btn-outline",
-    disabled: "btn",
-  };
-  const style = styles[variant];
-  const className = classNames[variant];
-  // Rendered as a Link (real <a>) when href is given, so we never nest a
-  // <button> inside an <a> — that markup is invalid HTML and breaks
-  // keyboard/screen-reader navigation.
-  if (href && !disabled) {
-    return (
-      <Link href={href} className={className} style={style}>
-        {children}
-      </Link>
-    );
-  }
-  return (
-    <button className={className} style={style} disabled={disabled} onClick={onClick}>
-      {children}
-    </button>
-  );
-}
-
-function Badge({ children, color = C.primary }: { children: React.ReactNode; color?: string }) {
-  return (
-    <span style={{
-      display: "inline-block",
-      background: `${color}18`,
-      color,
-      border: `1px solid ${color}33`,
-      borderRadius: 999,
-      fontSize: 11,
-      fontWeight: 700,
-      letterSpacing: "0.08em",
-      padding: "3px 10px",
-    }}>
-      {children}
-    </span>
-  );
-}
-
-function SectionLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: C.primary, marginBottom: 12 }}>
-      {children}
-    </p>
-  );
-}
-
-function Card({ children, style, featured }: { children: React.ReactNode; style?: React.CSSProperties; featured?: boolean }) {
-  const [hovered, setHovered] = useState(false);
-  return (
-    <div
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      style={{
-        ...GLASS,
-        background: featured ? "linear-gradient(145deg,rgba(232,238,255,0.85),rgba(240,244,255,0.75))" : GLASS.background,
-        border: `1px solid ${featured ? "rgba(79,124,255,0.35)" : hovered ? "rgba(79,124,255,0.3)" : "rgba(255,255,255,0.6)"}`,
-        borderRadius: 18,
-        padding: "28px 24px",
-        transition: `all 0.3s ${EASE}`,
-        transform: hovered && !featured ? "translateY(-4px)" : "none",
-        boxShadow: featured
-          ? `0 0 0 1px rgba(79,124,255,0.2), 0 16px 44px rgba(79,124,255,0.14), inset 0 1px 0 rgba(255,255,255,0.6)`
-          : hovered ? "0 16px 44px rgba(16,24,40,0.10), inset 0 1px 0 rgba(255,255,255,0.6)" : GLASS.boxShadow,
-        position: "relative",
-        overflow: "hidden",
-        ...style,
-      }}
-    >
-      {children}
-    </div>
-  );
-}
+import { Button as Btn, BUTTON_STYLES } from "@/app/components/ui/Button";
+import { Card } from "@/app/components/ui/Card";
+import { Badge, SectionLabel } from "@/app/components/ui/Badge";
+import { C, EASE, GLASS } from "@/app/lib/theme";
 
 // ── ANIMATED SECTIONS ──────────────────────────────────────────
 function Reveal({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) {
@@ -272,10 +125,7 @@ export default function HomePage() {
         .nav-link:hover { color: ${C.text}; }
         .feat-card:hover .feat-icon { transform: scale(1.1); }
         .feat-card:hover { transform: translateY(-4px); border-color: rgba(79,124,255,0.3); box-shadow: 0 16px 40px rgba(16,24,40,0.10), inset 0 1px 0 rgba(255,255,255,0.6); }
-        .btn:not(:disabled):hover { transform: translateY(-2px); }
-        .btn-primary:not(:disabled):hover { box-shadow: 0 8px 28px rgba(79,124,255,0.32), inset 0 1px 0 rgba(255,255,255,0.3); }
-        .btn-ghost:not(:disabled):hover { background: rgba(79,124,255,0.07); border-color: rgba(79,124,255,0.25); color: ${C.text}; }
-        .btn-outline:not(:disabled):hover { border-color: ${C.primary}; color: ${C.primary}; background: rgba(79,124,255,0.05); }
+        ${BUTTON_STYLES}
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: ${C.bg}; }
         ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 999px; }
