@@ -139,7 +139,8 @@ async def ask_question(
                 "YOUR TASKS:\n"
                 "1. Read the context carefully and teach it step by step in the same order as this page.\n"
                 "2. Do not skip named quantities, units, symbols, formulas, figure references, or table rows that appear in the context.\n"
-                "3. If the context contains a table, preserve the table's important rows and teach what each row means.\n"
+                "3. If the context contains a table, reproduce it as a FULL Markdown table (same rows, "
+                "columns and header — do not summarize it away) and then explain what each row means.\n"
                 "4. If the context mentions a figure or diagram, explain what the context says about it.\n"
                 "5. Keep total response under 1200 words, but prefer complete coverage over a short summary.\n"
                 f"{checkpoint_instruction}\n\n"
@@ -160,16 +161,28 @@ async def ask_question(
                 docs = vector_store.similarity_search(
                     query=user_query, k=6, filter={"topicId": payload.topicName}
                 )
+
+            # Collect every image referenced by the retrieved chunks so they can be
+            # appended deterministically after the response (see note below on why
+            # inline image tags from the LLM itself are unreliable).
+            qa_images: list[str] = []
             for d in docs:
                 context_text += f"\n---\n{d.page_content}\n"
-                imgs = d.metadata.get("images", [])
-                if imgs:
-                    clean_images = [u.replace("\n", "").replace("\r", "").strip() for u in imgs]
-                    context_text += (
-                        "\n\nAVAILABLE_IMAGES (You MUST include these exact markdown lines in your response):\n"
-                        + "\n".join(f"![Diagram]({u})" for u in clean_images)
-                        + "\n"
-                    )
+                for u in d.metadata.get("images", []) or []:
+                    clean = u.replace("\n", "").replace("\r", "").strip()
+                    if clean and clean not in qa_images:
+                        qa_images.append(clean)
+
+            if qa_images:
+                context_text += (
+                    "\n\nRELATED_DIAGRAMS: this section has diagrams available "
+                    "(shown to the student automatically after your answer — do not "
+                    "invent your own image links, just refer to them in words, e.g. "
+                    "'as shown in the diagram below').\n"
+                )
+                image_trailer_text = (
+                    "\n\n".join(f"![Diagram]({u})" for u in qa_images) + "\n\n"
+                )
 
             sys_msg = (
                 f"You are Viswasimi, an expert AI tutor.\n"
@@ -177,7 +190,8 @@ async def ask_question(
                 "MATH FORMATTING: Use $...$ for inline math, $$...$$ for block equations.\n\n"
                 "RULES:\n"
                 "1. Answer using ONLY the provided context in simple language.\n"
-                "2. TABLE RULE: If the student asks to see a table, reproduce the Markdown table from the context.\n"
+                "2. TABLE RULE: If the student asks to see a table, reproduce the FULL Markdown table "
+                "from the context exactly (same rows, columns and header), not a paraphrase.\n"
                 "3. Answer in 1–3 paragraphs. No [CHECKPOINT] tags in QA mode.\n\n"
                 "Context:\n{{context}}"
             )
