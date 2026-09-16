@@ -17,7 +17,7 @@ import remarkMath   from "remark-math";
 import rehypeKatex  from "rehype-katex";
 import { useSpeech } from "@/app/hooks/useSpeech";
 
-import type { Topic, Chapter, Subject, PlanItem, Message } from "./types";
+import type { Subject, PlanItem, Message } from "./types";
 import { getChapterStatus, getSubjectStatus, STATUS_EMOJI, extractCheckpoint, normaliseMath } from "./chatHelpers";
 import { PageImageModal } from "./components/PageImageModal";
 import { CheckpointBanner } from "./components/CheckpointBanner";
