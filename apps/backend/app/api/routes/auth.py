@@ -1,8 +1,8 @@
-import os
 import uuid
 import secrets
 import bcrypt
 import smtplib
+import logging
 from datetime import timedelta
 from email.message import EmailMessage
 
@@ -12,15 +12,17 @@ from sqlalchemy.orm import Session as DBSession
 from app.api.dependencies import (
     get_db, get_current_user, cookie_settings, now_utc, _to_naive_utc
 )
+from app.core.config import settings
 from app.core.rate_limit import limiter
 from app.models.user import User
 from app.models.auth import Session, PasswordResetToken
 from app.models.billing import SubscriptionPlan, UserSubscription
 from app.schemas.auth import (
-    SignupRequest, LoginRequest, ChangePasswordRequest, 
+    SignupRequest, LoginRequest, ChangePasswordRequest,
     ForgotPasswordRequest, ResetPasswordRequest
 )
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -28,11 +30,11 @@ router = APIRouter()
 # ─────────────────────────────────────────────────────────────────────────────
 
 def smtp_is_configured() -> bool:
-    return bool(os.getenv("SMTP_HOST") and os.getenv("SMTP_USER") and os.getenv("SMTP_PASS"))
+    return bool(settings.SMTP_HOST and settings.SMTP_USER and settings.SMTP_PASS)
 
 def send_email_task(to_email: str, subject: str, html: str):
-    host, port = os.getenv("SMTP_HOST"), int(os.getenv("SMTP_PORT", "587"))
-    user, password = os.getenv("SMTP_USER"), os.getenv("SMTP_PASS")
+    host, port = settings.SMTP_HOST, settings.SMTP_PORT
+    user, password = settings.SMTP_USER, settings.SMTP_PASS
     if not all([host, user, password]): return
     msg = EmailMessage()
     msg["From"] = f"Viswasimi <{user}>"
@@ -57,13 +59,12 @@ def _serialize_user(user: User) -> dict:
     }
 
 def _create_session(db: DBSession, user_id: str) -> Session:
-    session_days = int(os.getenv("SESSION_DAYS", "7"))
     session = Session(
         id=f"sess_{uuid.uuid4().hex}",
         userId=user_id,
         token=secrets.token_hex(32),
         createdAt=_to_naive_utc(now_utc()),
-        expiresAt=_to_naive_utc(now_utc() + timedelta(days=session_days)),
+        expiresAt=_to_naive_utc(now_utc() + timedelta(days=settings.SESSION_DAYS)),
     )
     db.add(session)
     db.flush()
@@ -112,8 +113,8 @@ def signup(
         name=payload.name.strip(),
         email=email,
         passwordHash=bcrypt.hashpw(payload.password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8"),
-        locale=os.getenv("DEFAULT_LOCALE", "en-IN"),
-        timezone=os.getenv("DEFAULT_TIMEZONE", "Asia/Kolkata"),
+        locale=settings.DEFAULT_LOCALE,
+        timezone=settings.DEFAULT_TIMEZONE,
         createdAt=_to_naive_utc(now_utc()),
     )
     db.add(user)
@@ -220,7 +221,7 @@ def forgot_password(
     )
     db.commit()
 
-    reset_link = f"{os.getenv('APP_URL', 'http://localhost:3000')}/reset-password?token={token}"
+    reset_link = f"{settings.APP_URL}/reset-password?token={token}"
     if smtp_is_configured():
         send_email_task(
             to_email=user.email,
@@ -235,7 +236,15 @@ def forgot_password(
         )
         return message
 
-    return {**message, "delivery": "preview", "resetLink": reset_link, "resetToken": token}
+    # SMTP isn't configured. Never echo the live reset token/link back to the
+    # caller in a real deployment — this endpoint is unauthenticated, so doing
+    # so would let anyone take over any account just by knowing its email.
+    # Only expose it as a local-dev convenience.
+    if settings.ENVIRONMENT != "production":
+        return {**message, "delivery": "preview", "resetLink": reset_link, "resetToken": token}
+
+    logger.error("Password reset requested but SMTP is not configured; email not sent for user %s", user.id)
+    return message
 
 @router.get("/reset-password/validate")
 def validate_reset_password(token: str, db: DBSession = Depends(get_db)):

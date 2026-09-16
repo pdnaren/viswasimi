@@ -1,4 +1,3 @@
-import os
 import uuid
 import json
 import logging
@@ -10,7 +9,8 @@ from sqlalchemy.orm import Session as DBSession
 from sqlalchemy import func
 from openai import AsyncOpenAI
 
-from app.api.dependencies import get_db, get_current_user, get_active_subscription, _to_naive_utc, now_utc
+from app.api.dependencies import get_db, get_current_user, get_active_subscription, _to_naive_utc, now_utc, IST
+from app.core.config import settings
 from app.core.rate_limit import limiter
 from app.models.user import User
 from app.models.tutoring import ChatMessage
@@ -20,8 +20,7 @@ from app.schemas.tutoring import ChatRequest, ChatSavePayload, CheckpointGradeRe
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
-openai_client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-INTERNAL_API_KEY = os.getenv("INTERNAL_API_KEY")
+openai_client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
 
 async def evaluate_answer_accuracy(history: list, user_message: str) -> int | None:
     if not history:
@@ -116,11 +115,14 @@ async def chat_respond(
     is_basic = subscription and subscription.plan and subscription.plan.name != "free"
 
     if not is_basic:
-        utc_today_start = _to_naive_utc(datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0))
+        # Reset the daily quota at IST midnight, not UTC midnight — the product
+        # targets Indian students, so a UTC boundary would reset mid-morning IST.
+        ist_today_start = datetime.now(IST).replace(hour=0, minute=0, second=0, microsecond=0)
+        day_start_utc = _to_naive_utc(ist_today_start.astimezone(timezone.utc))
         sent_today_count = (
             db.query(func.count(ChatMessage.id))
-            .filter(ChatMessage.userId == user.id, ChatMessage.role == "user", ChatMessage.createdAt >= utc_today_start)
-            .with_for_update().scalar()
+            .filter(ChatMessage.userId == user.id, ChatMessage.role == "user", ChatMessage.createdAt >= day_start_utc)
+            .scalar()
         )
         if sent_today_count >= 10:
             raise HTTPException(403, "Daily limit reached. Free users are limited to 10 messages per day. Please upgrade!")
@@ -187,19 +189,23 @@ async def chat_respond(
         "language": language_map.get(user.locale, "English"),
     }
 
-    rag_backend_url = os.getenv("RAG_BACKEND_URL", "http://localhost:8001")
-    rag_headers = {"Content-Type": "application/json", "X-Internal-Key": INTERNAL_API_KEY}
+    rag_headers = {"Content-Type": "application/json", "X-Internal-Key": settings.INTERNAL_API_KEY}
 
     async def stream_proxy():
-        async with httpx.AsyncClient(timeout=60.0) as client:
-            async with client.stream("POST", f"{rag_backend_url}/api/ask", json=rag_payload, headers=rag_headers) as response:
-                if response.status_code >= 400:
-                    error_msg = {"choices": [{"delta": {"content": "I'm having trouble connecting to my knowledge base right now."}}]}
-                    yield f"data: {json.dumps(error_msg)}\n\n"
-                    yield "data: [DONE]\n\n"
-                    return
-                async for chunk in response.aiter_bytes():
-                    yield chunk
+        error_msg = {"choices": [{"delta": {"content": "I'm having trouble connecting to my knowledge base right now."}}]}
+        try:
+            async with httpx.AsyncClient(timeout=60.0) as client:
+                async with client.stream("POST", f"{settings.RAG_BACKEND_URL}/api/ask", json=rag_payload, headers=rag_headers) as response:
+                    if response.status_code >= 400:
+                        yield f"data: {json.dumps(error_msg)}\n\n"
+                        yield "data: [DONE]\n\n"
+                        return
+                    async for chunk in response.aiter_bytes():
+                        yield chunk
+        except httpx.HTTPError as exc:
+            logger.error(f"RAG backend request failed: {exc}")
+            yield f"data: {json.dumps(error_msg)}\n\n"
+            yield "data: [DONE]\n\n"
 
     return StreamingResponse(stream_proxy(), media_type="text/event-stream")
 

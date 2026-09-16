@@ -1,6 +1,4 @@
-import os
 from datetime import datetime
-from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from slowapi import _rate_limit_exceeded_handler
@@ -11,9 +9,7 @@ from app.core.rate_limit import limiter
 from app.api.routes import chat,auth,progress,study_plan,curriculum,dashboard,payments, admin, profile
 
 # We will import and add the rest of the routers in Part 2
-# from app.api.routes import auth, admin, dashboard, payments, progress, study_plan 
-
-load_dotenv()
+# from app.api.routes import auth, admin, dashboard, payments, progress, study_plan
 
 app = FastAPI(title="Viswasimi Backend", version="1.5.0")
 
@@ -22,10 +18,9 @@ app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # Setup CORS
-ALLOWED_ORIGINS = [o.strip() for o in os.getenv("ALLOWED_ORIGINS", "http://localhost:3000").split(",")]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=ALLOWED_ORIGINS,
+    allow_origins=[o.strip() for o in settings.ALLOWED_ORIGINS.split(",")],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

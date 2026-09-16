@@ -1,4 +1,3 @@
-import os
 import uuid
 import logging
 import razorpay
@@ -7,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 
 from sqlalchemy.orm import Session as DBSession
 from app.api.dependencies import get_db, get_current_user, _to_naive_utc, now_utc
+from app.core.config import settings
 from app.core.rate_limit import limiter
 from app.models.user import User
 from app.models.billing import SubscriptionPlan, UserSubscription
@@ -15,13 +15,10 @@ from app.schemas.billing import UpgradeRequest, PaymentVerifyRequest
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
-RAZORPAY_KEY_ID = os.getenv("RAZORPAY_KEY_ID")
-RAZORPAY_KEY_SECRET = os.getenv("RAZORPAY_KEY_SECRET")
-
 # Only initialize the client if the keys are actually present
 rzp_client = None
-if RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET:
-    rzp_client = razorpay.Client(auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET))
+if settings.RAZORPAY_KEY_ID and settings.RAZORPAY_KEY_SECRET:
+    rzp_client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
 
 @router.post("/create-order")
 @limiter.limit("10/minute")
@@ -41,7 +38,7 @@ async def create_order(
     try:
         data = {"amount": amount, "currency": "INR", "receipt": f"rcpt_{user.id[:8]}"}
         order = rzp_client.order.create(data=data)
-        return {"order_id": order["id"], "amount": amount, "key_id": RAZORPAY_KEY_ID}
+        return {"order_id": order["id"], "amount": amount, "key_id": settings.RAZORPAY_KEY_ID}
     except Exception as e:
         logger.error(f"Razorpay Order Error: {e}")
         raise HTTPException(status_code=500, detail="Could not create payment order.")

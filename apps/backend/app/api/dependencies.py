@@ -1,9 +1,9 @@
-import os
 from datetime import datetime, timedelta, timezone
 from typing import Generator
 from fastapi import Cookie, Depends, HTTPException, Request
 
 from sqlalchemy.orm import Session as DBSession
+from app.core.config import settings
 from app.db.session import SessionLocal
 from app.models.auth import Session
 from app.models.user import User
@@ -32,14 +32,12 @@ def get_db() -> Generator:
         db.close()
 
 def cookie_settings() -> dict:
-    secure = os.getenv("COOKIE_SECURE", "false").lower() == "true"
-    session_days = int(os.getenv("SESSION_DAYS", "7"))
     return {
         "httponly": True,
-        "secure": secure,
-        "samesite": "none" if secure else "strict",
+        "secure": settings.COOKIE_SECURE,
+        "samesite": "none" if settings.COOKIE_SECURE else "strict",
         "path": "/",
-        "max_age": 60 * 60 * 24 * session_days,
+        "max_age": 60 * 60 * 24 * settings.SESSION_DAYS,
     }
 
 def get_current_user(

@@ -1,18 +1,15 @@
-import os
 import uuid
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Request, Query, UploadFile, File, Form
 from sqlalchemy.orm import Session as DBSession
 
 from app.api.dependencies import get_db, get_current_user
+from app.core.config import settings
 from app.models.user import User
 from app.models.curriculum import Subject, Chapter, Topic
 from app.schemas.curriculum import SubjectSeedRequest
 
 router = APIRouter()
-
-INTERNAL_API_KEY = os.getenv("INTERNAL_API_KEY")
-RAG_BACKEND_URL = os.getenv("RAG_BACKEND_URL", "http://localhost:8001")
 
 def require_admin(user: User = Depends(get_current_user)) -> User:
     if user.role != "ADMIN":
@@ -113,20 +110,25 @@ async def proxy_ingest(
     file: UploadFile = File(...),
     admin_user: User = Depends(require_admin),
 ):
-    file_bytes = await file.read()
-    
-    async with httpx.AsyncClient(timeout=300.0) as client:
-        res = await client.post(
-            f"{RAG_BACKEND_URL}/api/ingest",
-            headers={"X-Internal-Key": INTERNAL_API_KEY}, 
-            data={
-                "grade": grade, 
-                "subject": subject, 
-                "chapterId": chapterId, 
-                "topicId": topicId
-            },
-            files={"file": (file.filename, file_bytes, file.content_type)}
-        )
+    file_bytes = await file.read(settings.MAX_UPLOAD_BYTES + 1)
+    if len(file_bytes) > settings.MAX_UPLOAD_BYTES:
+        raise HTTPException(status_code=413, detail="File too large.")
+
+    try:
+        async with httpx.AsyncClient(timeout=300.0) as client:
+            res = await client.post(
+                f"{settings.RAG_BACKEND_URL}/api/ingest",
+                headers={"X-Internal-Key": settings.INTERNAL_API_KEY},
+                data={
+                    "grade": grade,
+                    "subject": subject,
+                    "chapterId": chapterId,
+                    "topicId": topicId
+                },
+                files={"file": (file.filename, file_bytes, file.content_type)}
+            )
+    except httpx.HTTPError as exc:
+        raise HTTPException(status_code=502, detail=f"Could not reach the RAG backend: {exc}")
 
     if res.status_code != 200:
         raise HTTPException(status_code=res.status_code, detail=res.text)
