@@ -22,6 +22,28 @@ router = APIRouter()
 
 openai_client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
 
+FREE_TIER_DAILY_MESSAGE_LIMIT = 10
+
+
+def get_ist_day_start_utc(reference: datetime | None = None) -> datetime:
+    """UTC instant corresponding to today's IST midnight (naive, matching how
+    createdAt is stored). Used instead of UTC midnight so the free-tier daily
+    quota resets when the day actually changes for the app's Indian users,
+    not at 5:30am IST."""
+    now = (reference or datetime.now(timezone.utc)).astimezone(IST)
+    ist_midnight = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    return _to_naive_utc(ist_midnight.astimezone(timezone.utc))
+
+
+def count_free_tier_messages_today(db: DBSession, user_id: str) -> int:
+    day_start_utc = get_ist_day_start_utc()
+    return (
+        db.query(func.count(ChatMessage.id))
+        .filter(ChatMessage.userId == user_id, ChatMessage.role == "user", ChatMessage.createdAt >= day_start_utc)
+        .scalar()
+    )
+
+
 async def evaluate_answer_accuracy(history: list, user_message: str) -> int | None:
     if not history:
         return None
@@ -115,17 +137,9 @@ async def chat_respond(
     is_basic = subscription and subscription.plan and subscription.plan.name != "free"
 
     if not is_basic:
-        # Reset the daily quota at IST midnight, not UTC midnight — the product
-        # targets Indian students, so a UTC boundary would reset mid-morning IST.
-        ist_today_start = datetime.now(IST).replace(hour=0, minute=0, second=0, microsecond=0)
-        day_start_utc = _to_naive_utc(ist_today_start.astimezone(timezone.utc))
-        sent_today_count = (
-            db.query(func.count(ChatMessage.id))
-            .filter(ChatMessage.userId == user.id, ChatMessage.role == "user", ChatMessage.createdAt >= day_start_utc)
-            .scalar()
-        )
-        if sent_today_count >= 10:
-            raise HTTPException(403, "Daily limit reached. Free users are limited to 10 messages per day. Please upgrade!")
+        sent_today_count = count_free_tier_messages_today(db, user.id)
+        if sent_today_count >= FREE_TIER_DAILY_MESSAGE_LIMIT:
+            raise HTTPException(403, f"Daily limit reached. Free users are limited to {FREE_TIER_DAILY_MESSAGE_LIMIT} messages per day. Please upgrade!")
 
     if not payload.topicId:
         raise HTTPException(400, "Please select a topic from the curriculum to start learning.")
