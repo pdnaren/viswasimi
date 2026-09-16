@@ -23,11 +23,8 @@
         "name": "next"
       }
     ],
-    // --- THE FIX ---
-    // baseUrl is removed to avoid deprecation errors.
-    // paths are now mapped directly to the root.
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./src/*"]
     },
     // This silences the deprecation warning for baseUrl in older environments
     "ignoreDeprecations": "5.0"

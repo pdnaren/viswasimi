@@ -1,1 +1,31 @@
-node_modules
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Environment variables — never commit real secrets
+.env
+.env.*
+!.env.example
+
+# Next.js (apps/web)
+.next/
+out/
+next-env.d.ts
+*.tsbuildinfo
+
+# Python (apps/backend, apps/rag_backend)
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

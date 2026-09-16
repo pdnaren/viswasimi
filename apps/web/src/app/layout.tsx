@@ -7,8 +7,28 @@ import type { Metadata } from "next";
 import Script from "next/script";
 
 export const metadata: Metadata = {
-  title: "Viswasimi",
-  description: "AI-powered tutor for students",
+  metadataBase: new URL("https://viswasimi.com"),
+  title: {
+    default: "Viswasimi",
+    template: "%s · Viswasimi",
+  },
+  description: "AI-powered tutor for students in Classes 6–12 and competitive exams like JEE and NEET.",
+  icons: {
+    icon: "/viswasimi-mark.svg",
+    shortcut: "/viswasimi-mark.svg",
+    apple: "/viswasimi-mark.svg",
+  },
+  openGraph: {
+    title: "Viswasimi",
+    description: "AI-powered tutor for students in Classes 6–12 and competitive exams like JEE and NEET.",
+    siteName: "Viswasimi",
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: "Viswasimi",
+    description: "AI-powered tutor for students in Classes 6–12 and competitive exams like JEE and NEET.",
+  },
 };
 
 export default function RootLayout({
@@ -18,14 +38,6 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      {/* 🚨 ADD THIS HEAD SECTION 🚨 */}
-      <head>
-        <link 
-          rel="stylesheet" 
-          href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" 
-        />
-      </head>
-      
       <body>
         {children}
         

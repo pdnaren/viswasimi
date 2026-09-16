@@ -28,6 +28,7 @@ function Btn({
   block = false,
   size = "md",
   onClick,
+  href,
 }: {
   children: React.ReactNode;
   variant?: "primary" | "ghost" | "outline" | "disabled";
@@ -35,6 +36,7 @@ function Btn({
   block?: boolean;
   size?: "sm" | "md" | "lg";
   onClick?: () => void;
+  href?: string;
 }) {
   const base: React.CSSProperties = {
     fontFamily: "inherit",
@@ -50,6 +52,7 @@ function Btn({
     width: block ? "100%" : undefined,
     padding: size === "lg" ? "14px 28px" : size === "sm" ? "7px 14px" : "10px 20px",
     fontSize: size === "lg" ? 16 : size === "sm" ? 13 : 14,
+    textDecoration: "none",
   };
   const styles: Record<string, React.CSSProperties> = {
     primary: { ...base, background: C.primary, color: "#fff", boxShadow: `0 4px 18px ${C.glow}` },
@@ -57,8 +60,19 @@ function Btn({
     outline: { ...base, background: "transparent", color: C.text, border: `1.5px solid rgba(0,0,0,0.15)` },
     disabled: { ...base, background: "rgba(0,0,0,0.05)", color: "rgba(0,0,0,0.25)", border: `1px solid rgba(0,0,0,0.08)`, cursor: "not-allowed" },
   };
+  const style = styles[variant];
+  // Rendered as a Link (real <a>) when href is given, so we never nest a
+  // <button> inside an <a> — that markup is invalid HTML and breaks
+  // keyboard/screen-reader navigation.
+  if (href && !disabled) {
+    return (
+      <Link href={href} style={style}>
+        {children}
+      </Link>
+    );
+  }
   return (
-    <button style={styles[variant]} disabled={disabled} onClick={onClick}>
+    <button style={style} disabled={disabled} onClick={onClick}>
       {children}
     </button>
   );
@@ -138,6 +152,7 @@ function Reveal({ children, delay = 0 }: { children: React.ReactNode; delay?: nu
 function Particles() {
   const ref = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const canvas = ref.current!;
     const ctx = canvas.getContext("2d")!;
     let W = canvas.width = window.innerWidth;
@@ -166,28 +181,38 @@ function Particles() {
     draw();
     return () => cancelAnimationFrame(raf);
   }, []);
-  return <canvas ref={ref} style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0, opacity: 0.5 }} />;
+  return <canvas ref={ref} aria-hidden="true" style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0, opacity: 0.5 }} />;
 }
 
 // ── FAQ ITEM ──────────────────────────────────────────────────
 function FaqItem({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false);
+  const panelId = React.useId();
   return (
     <div
-      onClick={() => setOpen(!open)}
       style={{
         background: C.card,
         border: `1px solid ${open ? "rgba(79,124,255,0.3)" : C.border}`,
-        borderRadius: 12, padding: "18px 22px", cursor: "pointer",
+        borderRadius: 12,
         transition: "all 0.2s",
         boxShadow: open ? "0 4px 20px rgba(79,124,255,0.08)" : "0 1px 4px rgba(0,0,0,0.04)",
       }}
     >
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16 }}>
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        aria-expanded={open}
+        aria-controls={panelId}
+        style={{
+          width: "100%", background: "transparent", border: "none", padding: "18px 22px",
+          cursor: "pointer", fontFamily: "inherit", textAlign: "left",
+          display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16,
+        }}
+      >
         <span style={{ fontWeight: 600, fontSize: 15, color: C.text }}>{q}</span>
-        <span style={{ color: C.primary, fontSize: 20, lineHeight: 1, flexShrink: 0, transform: open ? "rotate(45deg)" : "none", transition: "transform 0.2s" }}>+</span>
-      </div>
-      {open && <p style={{ marginTop: 12, color: C.muted, fontSize: 14, lineHeight: 1.7 }}>{a}</p>}
+        <span aria-hidden="true" style={{ color: C.primary, fontSize: 20, lineHeight: 1, flexShrink: 0, transform: open ? "rotate(45deg)" : "none", transition: "transform 0.2s" }}>+</span>
+      </button>
+      {open && <p id={panelId} style={{ margin: "0 22px 18px", color: C.muted, fontSize: 14, lineHeight: 1.7 }}>{a}</p>}
     </div>
   );
 }
@@ -234,7 +259,7 @@ export default function HomePage() {
         { w: 400, h: 400, bg: C.secondary, bottom: 0, right: -100, delay: -8 },
         { w: 300, h: 300, bg: C.pink, top: "40%", left: "50%", delay: -14 },
       ].map((o, i) => (
-        <div key={i} style={{
+        <div key={i} aria-hidden="true" style={{
           position: "fixed", borderRadius: "50%", filter: "blur(100px)", opacity: 0.12,
           pointerEvents: "none", zIndex: 0, width: o.w, height: o.h, background: o.bg,
           top: (o as any).top, left: (o as any).left, bottom: (o as any).bottom, right: (o as any).right,
@@ -256,15 +281,15 @@ export default function HomePage() {
           <BrandLogo size={30} textSize={18} />
         </div>
 
-        <nav style={{ display: "flex", gap: 28 }}>
+        <nav aria-label="Primary" style={{ display: "flex", gap: 28 }}>
           {["features", "plans", "roadmap", "faq"].map(l => (
             <a key={l} href={`#${l}`} className="nav-link" style={{ textTransform: "capitalize" }}>{l}</a>
           ))}
         </nav>
 
         <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-          <Link href="/dashboard"><Btn variant="ghost">Login</Btn></Link>
-          <Link href="/signup"><Btn variant="primary">Start Free →</Btn></Link>
+          <Btn href="/dashboard" variant="ghost">Login</Btn>
+          <Btn href="/signup" variant="primary">Start Free →</Btn>
         </div>
       </header>
 
@@ -289,8 +314,8 @@ export default function HomePage() {
         </p>
 
         <div style={{ display: "flex", gap: 12, marginTop: 32, flexWrap: "wrap", justifyContent: "center", animation: "msgIn 0.6s 0.3s ease both", animationFillMode: "both" }}>
-          <Link href="/signup"><Btn variant="primary" size="lg">Start Learning Free →</Btn></Link>
-          <Link href="#plans"><Btn variant="outline" size="lg">Explore Basic Plan</Btn></Link>
+          <Btn href="/signup" variant="primary" size="lg">Start Learning Free →</Btn>
+          <Btn href="#plans" variant="outline" size="lg">Explore Basic Plan</Btn>
         </div>
 
         {/* Stats */}
@@ -453,7 +478,7 @@ export default function HomePage() {
                     <li key={f} style={{ display: "flex", gap: 8, fontSize: 13, color: C.muted }}><span style={{ flexShrink: 0 }}>—</span>{f}</li>
                   ))}
                 </ul>
-                <Btn variant="ghost" block>Get started →</Btn>
+                <Btn href="/signup" variant="ghost" block>Get started →</Btn>
               </Card>
             </Reveal>
 
@@ -471,7 +496,7 @@ export default function HomePage() {
                     <li key={f} style={{ display: "flex", gap: 8, fontSize: 13, color: C.text }}><span style={{ color: C.secondary, flexShrink: 0 }}>✓</span>{f}</li>
                   ))}
                 </ul>
-                <Btn variant="primary" block>Upgrade to Basic →</Btn>
+                <Btn href="/signup" variant="primary" block>Upgrade to Basic →</Btn>
               </Card>
             </Reveal>
 
@@ -623,8 +648,8 @@ export default function HomePage() {
               Join Viswasimi today and experience personalized AI-powered learning for Classes 6–12.
             </p>
             <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
-              <Link href="/signup"><Btn variant="primary" size="lg">Start Free →</Btn></Link>
-              <Link href="#plans"><Btn variant="outline" size="lg">Explore Basic Plan</Btn></Link>
+              <Btn href="/signup" variant="primary" size="lg">Start Free →</Btn>
+              <Btn href="#plans" variant="outline" size="lg">Explore Basic Plan</Btn>
             </div>
           </div>
         </Reveal>

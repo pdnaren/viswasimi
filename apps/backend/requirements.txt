@@ -1,0 +1,13 @@
+fastapi
+uvicorn[standard]
+python-dotenv
+pydantic
+pydantic-settings
+email-validator
+sqlalchemy
+psycopg2-binary
+slowapi
+bcrypt
+httpx
+openai
+razorpay
