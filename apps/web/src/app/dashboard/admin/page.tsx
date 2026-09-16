@@ -169,7 +169,8 @@ export default function AdminUploadPage() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Lora:wght@500;600&display=swap');
 
-        .vw-admin-container { padding: 40px; max-width: 800px; margin: 0 auto; font-family: 'DM Sans', sans-serif; color: #1e293b; }
+        .vw-admin-container { padding: 40px; max-width: 1200px; margin: 0 auto; font-family: 'DM Sans', sans-serif; color: #1e293b; }
+        @media (max-width: 640px) { .vw-admin-container { padding: 20px; } }
         .vw-admin-header { margin-bottom: 32px; }
         .vw-admin-header h1 { font-size: 28px; font-weight: 700; font-family: 'Lora', serif; margin: 0 0 8px 0; color: #0f172a; }
         .vw-admin-header p { color: #64748b; margin: 0; font-size: 15px; }

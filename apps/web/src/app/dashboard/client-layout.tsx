@@ -207,7 +207,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const isFree = planName.toLowerCase() === "free";
 
   return (
-    <div style={{
+    <div className="dashboard-root" style={{
       display: "flex", minHeight: "100vh", background: C.bg,
       fontFamily: "'Sora','Segoe UI',sans-serif", color: C.text,
     }}>
@@ -257,6 +257,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         .mobile-menu-btn:hover { background: rgba(0,0,0,0.05); }
 
         @media (max-width: 860px) {
+          .dashboard-root { flex-direction: column; }
           .dashboard-sidebar {
             position: fixed !important;
             top: 0; left: 0; height: 100dvh;
