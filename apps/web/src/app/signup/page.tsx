@@ -187,11 +187,11 @@ export default function SignupPage() {
         .grade-btn { border: 1.5px solid rgba(0,0,0,0.09); background: #f9fafb; color: ${C.muted}; border-radius: 10px; padding: 9px 6px; cursor: pointer; font-size: 13px; font-weight: 600; font-family: inherit; transition: all 0.15s; text-align: center; }
         .grade-btn:hover { border-color: rgba(79,124,255,0.4); color: ${C.text}; background: rgba(79,124,255,0.06); }
         .grade-btn.selected { border-color: ${C.primary}; background: rgba(79,124,255,0.10); color: ${C.primary}; box-shadow: 0 0 0 1px rgba(79,124,255,0.25); }
-        .submit-btn { width:100%; padding:13px; border-radius:10px; border:none; background:${C.primary}; color:#fff; font-size:15px; font-weight:700; font-family:inherit; cursor:pointer; transition:all 0.2s; box-shadow:0 4px 18px rgba(79,124,255,0.28); letter-spacing:-0.01em; }
-        .submit-btn:hover:not(:disabled) { background:#6b90ff; transform:translateY(-1px); box-shadow:0 8px 28px rgba(79,124,255,0.38); }
+        .submit-btn { width:100%; padding:13px; border-radius:10px; border:none; background:linear-gradient(135deg, ${C.primary}, #3d63e0); color:#fff; font-size:15px; font-weight:700; font-family:inherit; cursor:pointer; transition:all 0.25s cubic-bezier(0.16,1,0.3,1); box-shadow:0 4px 18px rgba(79,124,255,0.28), inset 0 1px 0 rgba(255,255,255,0.25); letter-spacing:-0.01em; }
+        .submit-btn:hover:not(:disabled) { transform:translateY(-2px); box-shadow:0 8px 28px rgba(79,124,255,0.38), inset 0 1px 0 rgba(255,255,255,0.3); }
         .submit-btn:disabled { opacity:0.6; cursor:not-allowed; transform:none; }
-        .next-btn { width:100%; padding:13px; border-radius:10px; border:none; background:${C.primary}; color:#fff; font-size:15px; font-weight:700; font-family:inherit; cursor:pointer; transition:all 0.2s; box-shadow:0 4px 18px rgba(79,124,255,0.28); }
-        .next-btn:hover { background:#6b90ff; transform:translateY(-1px); }
+        .next-btn { width:100%; padding:13px; border-radius:10px; border:none; background:linear-gradient(135deg, ${C.primary}, #3d63e0); color:#fff; font-size:15px; font-weight:700; font-family:inherit; cursor:pointer; transition:all 0.25s cubic-bezier(0.16,1,0.3,1); box-shadow:0 4px 18px rgba(79,124,255,0.28), inset 0 1px 0 rgba(255,255,255,0.25); }
+        .next-btn:hover { transform:translateY(-2px); box-shadow:0 8px 28px rgba(79,124,255,0.38), inset 0 1px 0 rgba(255,255,255,0.3); }
         .show-pass-btn { background:none; border:none; cursor:pointer; color:${C.muted}; font-size:17px; line-height:1; padding:0 4px; transition:color 0.2s; }
         .show-pass-btn:hover { color:${C.text}; }
         .login-link { color:${C.primary}; font-weight:600; text-decoration:none; transition:opacity 0.2s; }
@@ -241,12 +241,14 @@ export default function SignupPage() {
 
           {success ? (
             <div style={{
-              background: C.card,
+              background: "rgba(255,255,255,0.72)",
+              backdropFilter: "blur(20px) saturate(180%)",
+              WebkitBackdropFilter: "blur(20px) saturate(180%)",
               border: `1px solid rgba(0,184,150,0.25)`,
               borderRadius: 22,
               padding: "52px 32px",
               textAlign: "center",
-              boxShadow: "0 4px 6px rgba(0,0,0,0.04), 0 20px 60px rgba(0,184,150,0.10)",
+              boxShadow: "0 4px 6px rgba(0,0,0,0.04), 0 20px 60px rgba(0,184,150,0.12), inset 0 1px 0 rgba(255,255,255,0.6)",
               animation: "popIn 0.5s ease both",
             }}>
               <div style={{
@@ -271,11 +273,13 @@ export default function SignupPage() {
             </div>
           ) : (
             <div style={{
-              background: C.card,
-              border: `1px solid rgba(0,0,0,0.07)`,
+              background: "rgba(255,255,255,0.72)",
+              backdropFilter: "blur(20px) saturate(180%)",
+              WebkitBackdropFilter: "blur(20px) saturate(180%)",
+              border: `1px solid rgba(255,255,255,0.6)`,
               borderRadius: 22,
               padding: "36px 32px",
-              boxShadow: "0 4px 6px rgba(0,0,0,0.04), 0 20px 60px rgba(79,124,255,0.08)",
+              boxShadow: "0 4px 6px rgba(0,0,0,0.04), 0 20px 60px rgba(79,124,255,0.10), inset 0 1px 0 rgba(255,255,255,0.6)",
             }}>
 
               <div style={{ display: "flex", gap: 6, marginBottom: 28 }}>

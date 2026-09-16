@@ -110,8 +110,8 @@ export default function LoginPage() {
         .back-link:hover { color: ${C.text}; }
         .show-pass-btn { background: none; border: none; cursor: pointer; color: ${C.muted}; font-size: 18px; line-height: 1; padding: 0 4px; transition: color 0.2s; }
         .show-pass-btn:hover { color: ${C.text}; }
-        .submit-btn { width: 100%; padding: 13px; border-radius: 10px; border: none; background: ${C.primary}; color: #fff; font-size: 15px; font-weight: 700; font-family: inherit; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 18px rgba(79,124,255,0.28); letter-spacing: -0.01em; }
-        .submit-btn:hover:not(:disabled) { background: #6b90ff; transform: translateY(-1px); box-shadow: 0 8px 28px rgba(79,124,255,0.38); }
+        .submit-btn { width: 100%; padding: 13px; border-radius: 10px; border: none; background: linear-gradient(135deg, ${C.primary}, #3d63e0); color: #fff; font-size: 15px; font-weight: 700; font-family: inherit; cursor: pointer; transition: all 0.25s cubic-bezier(0.16,1,0.3,1); box-shadow: 0 4px 18px rgba(79,124,255,0.28), inset 0 1px 0 rgba(255,255,255,0.25); letter-spacing: -0.01em; }
+        .submit-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(79,124,255,0.38), inset 0 1px 0 rgba(255,255,255,0.3); }
         .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
         .divider { display: flex; align-items: center; gap: 12px; margin: 18px 0; }
         .divider::before, .divider::after { content:''; flex:1; height:1px; background: rgba(0,0,0,0.08); }
@@ -161,11 +161,13 @@ export default function LoginPage() {
 
           {/* Card */}
           <div style={{
-            background: C.card,
-            border: `1px solid rgba(0,0,0,0.07)`,
+            background: "rgba(255,255,255,0.72)",
+            backdropFilter: "blur(20px) saturate(180%)",
+            WebkitBackdropFilter: "blur(20px) saturate(180%)",
+            border: `1px solid rgba(255,255,255,0.6)`,
             borderRadius: 22,
             padding: "36px 32px",
-            boxShadow: "0 4px 6px rgba(0,0,0,0.04), 0 20px 60px rgba(79,124,255,0.08)",
+            boxShadow: "0 4px 6px rgba(0,0,0,0.04), 0 20px 60px rgba(79,124,255,0.10), inset 0 1px 0 rgba(255,255,255,0.6)",
           }}>
 
             {/* Header */}

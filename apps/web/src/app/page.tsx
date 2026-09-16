@@ -19,6 +19,18 @@ const C = {
   glow: "rgba(79,124,255,0.18)",
 } as const;
 
+// Smooth "ease-out-expo"-style curve used for hover/lift micro-interactions.
+const EASE = "cubic-bezier(0.16,1,0.3,1)";
+
+// Frosted-glass surface for cards — keeps the brand palette but adds depth
+// against the ambient gradient orbs behind it.
+const GLASS: React.CSSProperties = {
+  background: "rgba(255,255,255,0.72)",
+  backdropFilter: "blur(20px) saturate(180%)",
+  WebkitBackdropFilter: "blur(20px) saturate(180%)",
+  boxShadow: "0 1px 2px rgba(16,24,40,0.04), 0 16px 40px -12px rgba(16,24,40,0.10), inset 0 1px 0 rgba(255,255,255,0.6)",
+};
+
 // ── REUSABLE COMPONENTS ────────────────────────────────────────
 
 function Btn({
@@ -48,31 +60,43 @@ function Btn({
     alignItems: "center",
     justifyContent: "center",
     gap: 6,
-    transition: "all 0.2s",
+    transition: `all 0.25s ${EASE}`,
     width: block ? "100%" : undefined,
     padding: size === "lg" ? "14px 28px" : size === "sm" ? "7px 14px" : "10px 20px",
     fontSize: size === "lg" ? 16 : size === "sm" ? 13 : 14,
     textDecoration: "none",
   };
   const styles: Record<string, React.CSSProperties> = {
-    primary: { ...base, background: C.primary, color: "#fff", boxShadow: `0 4px 18px ${C.glow}` },
+    primary: {
+      ...base,
+      background: `linear-gradient(135deg, ${C.primary}, #3d63e0)`,
+      color: "#fff",
+      boxShadow: `0 4px 18px ${C.glow}, inset 0 1px 0 rgba(255,255,255,0.25)`,
+    },
     ghost: { ...base, background: "transparent", color: C.muted, border: `1px solid ${C.border}` },
     outline: { ...base, background: "transparent", color: C.text, border: `1.5px solid rgba(0,0,0,0.15)` },
     disabled: { ...base, background: "rgba(0,0,0,0.05)", color: "rgba(0,0,0,0.25)", border: `1px solid rgba(0,0,0,0.08)`, cursor: "not-allowed" },
   };
+  const classNames: Record<string, string> = {
+    primary: "btn btn-primary",
+    ghost: "btn btn-ghost",
+    outline: "btn btn-outline",
+    disabled: "btn",
+  };
   const style = styles[variant];
+  const className = classNames[variant];
   // Rendered as a Link (real <a>) when href is given, so we never nest a
   // <button> inside an <a> — that markup is invalid HTML and breaks
   // keyboard/screen-reader navigation.
   if (href && !disabled) {
     return (
-      <Link href={href} style={style}>
+      <Link href={href} className={className} style={style}>
         {children}
       </Link>
     );
   }
   return (
-    <button style={style} disabled={disabled} onClick={onClick}>
+    <button className={className} style={style} disabled={disabled} onClick={onClick}>
       {children}
     </button>
   );
@@ -111,15 +135,16 @@ function Card({ children, style, featured }: { children: React.ReactNode; style?
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
-        background: featured ? "linear-gradient(145deg,#e8eeff,#f0f4ff)" : C.card,
-        border: `1px solid ${featured ? C.primary : hovered ? "rgba(79,124,255,0.3)" : C.border}`,
+        ...GLASS,
+        background: featured ? "linear-gradient(145deg,rgba(232,238,255,0.85),rgba(240,244,255,0.75))" : GLASS.background,
+        border: `1px solid ${featured ? "rgba(79,124,255,0.35)" : hovered ? "rgba(79,124,255,0.3)" : "rgba(255,255,255,0.6)"}`,
         borderRadius: 18,
         padding: "28px 24px",
-        transition: "all 0.25s",
+        transition: `all 0.3s ${EASE}`,
         transform: hovered && !featured ? "translateY(-4px)" : "none",
         boxShadow: featured
-          ? `0 0 0 1px rgba(79,124,255,0.2), 0 12px 40px rgba(79,124,255,0.12)`
-          : hovered ? "0 12px 40px rgba(0,0,0,0.08)" : "0 1px 4px rgba(0,0,0,0.04)",
+          ? `0 0 0 1px rgba(79,124,255,0.2), 0 16px 44px rgba(79,124,255,0.14), inset 0 1px 0 rgba(255,255,255,0.6)`
+          : hovered ? "0 16px 44px rgba(16,24,40,0.10), inset 0 1px 0 rgba(255,255,255,0.6)" : GLASS.boxShadow,
         position: "relative",
         overflow: "hidden",
         ...style,
@@ -142,7 +167,7 @@ function Reveal({ children, delay = 0 }: { children: React.ReactNode; delay?: nu
     return () => obs.disconnect();
   }, [delay]);
   return (
-    <div ref={ref} style={{ opacity: vis ? 1 : 0, transform: vis ? "none" : "translateY(22px)", transition: "opacity 0.6s ease, transform 0.6s ease" }}>
+    <div ref={ref} style={{ opacity: vis ? 1 : 0, transform: vis ? "none" : "translateY(22px)", transition: `opacity 0.7s ${EASE}, transform 0.7s ${EASE}` }}>
       {children}
     </div>
   );
@@ -191,11 +216,11 @@ function FaqItem({ q, a }: { q: string; a: string }) {
   return (
     <div
       style={{
-        background: C.card,
-        border: `1px solid ${open ? "rgba(79,124,255,0.3)" : C.border}`,
+        ...GLASS,
+        border: `1px solid ${open ? "rgba(79,124,255,0.3)" : "rgba(255,255,255,0.6)"}`,
         borderRadius: 12,
-        transition: "all 0.2s",
-        boxShadow: open ? "0 4px 20px rgba(79,124,255,0.08)" : "0 1px 4px rgba(0,0,0,0.04)",
+        transition: `all 0.25s ${EASE}`,
+        boxShadow: open ? "0 4px 20px rgba(79,124,255,0.10), inset 0 1px 0 rgba(255,255,255,0.6)" : GLASS.boxShadow,
       }}
     >
       <button
@@ -246,6 +271,11 @@ export default function HomePage() {
         .nav-link { color: ${C.muted}; font-size: 14px; font-weight: 500; transition: color 0.2s; }
         .nav-link:hover { color: ${C.text}; }
         .feat-card:hover .feat-icon { transform: scale(1.1); }
+        .feat-card:hover { transform: translateY(-4px); border-color: rgba(79,124,255,0.3); box-shadow: 0 16px 40px rgba(16,24,40,0.10), inset 0 1px 0 rgba(255,255,255,0.6); }
+        .btn:not(:disabled):hover { transform: translateY(-2px); }
+        .btn-primary:not(:disabled):hover { box-shadow: 0 8px 28px rgba(79,124,255,0.32), inset 0 1px 0 rgba(255,255,255,0.3); }
+        .btn-ghost:not(:disabled):hover { background: rgba(79,124,255,0.07); border-color: rgba(79,124,255,0.25); color: ${C.text}; }
+        .btn-outline:not(:disabled):hover { border-color: ${C.primary}; color: ${C.primary}; background: rgba(79,124,255,0.05); }
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: ${C.bg}; }
         ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 999px; }
@@ -271,10 +301,11 @@ export default function HomePage() {
       <header style={{
         position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
         padding: "14px 32px", display: "flex", alignItems: "center", justifyContent: "space-between",
-        backdropFilter: "blur(20px)",
-        background: scrolled ? "rgba(244,246,251,0.92)" : "rgba(244,246,251,0.6)",
+        backdropFilter: "blur(20px) saturate(180%)",
+        WebkitBackdropFilter: "blur(20px) saturate(180%)",
+        background: scrolled ? "rgba(244,246,251,0.75)" : "rgba(244,246,251,0.45)",
         borderBottom: `1px solid ${scrolled ? C.border : "transparent"}`,
-        transition: "all 0.3s",
+        transition: `all 0.3s ${EASE}`,
         boxShadow: scrolled ? "0 1px 12px rgba(0,0,0,0.06)" : "none",
       }}>
         <div style={{ display: "flex", alignItems: "center" }}>
@@ -331,13 +362,13 @@ export default function HomePage() {
         {/* Chat mockup */}
         <div style={{ marginTop: 56, width: "100%", maxWidth: 660, animation: "msgIn 0.8s 0.6s ease both", animationFillMode: "both" }}>
           <div style={{
-            background: C.card,
-            border: `1px solid ${C.border}`,
+            ...GLASS,
+            border: "1px solid rgba(255,255,255,0.6)",
             borderRadius: 20, overflow: "hidden",
-            boxShadow: "0 8px 40px rgba(79,124,255,0.10), 0 1px 4px rgba(0,0,0,0.06)",
+            boxShadow: "0 8px 40px rgba(79,124,255,0.14), 0 1px 2px rgba(16,24,40,0.06), inset 0 1px 0 rgba(255,255,255,0.6)",
           }}>
             {/* Window bar */}
-            <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "14px 18px", borderBottom: `1px solid ${C.border}`, background: "#f9fafb" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "14px 18px", borderBottom: `1px solid ${C.border}`, background: "rgba(249,250,251,0.6)" }}>
               <div style={{ display: "flex", gap: 6 }}>
                 {["#ff5f57","#ffbd2e","#28ca41"].map(c => <div key={c} style={{ width: 11, height: 11, borderRadius: "50%", background: c }} />)}
               </div>
@@ -416,7 +447,7 @@ export default function HomePage() {
             { icon: "🏆", color: C.secondary, title: "Exam-Focused Prep", desc: "JEE, NEET, State Boards, Olympiads — curated content mapped to real syllabus patterns." },
           ].map((f, i) => (
             <Reveal key={f.title} delay={i * 70}>
-              <div className="feat-card" style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: "26px 22px", transition: "all 0.25s", height: "100%", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
+              <div className="feat-card" style={{ ...GLASS, border: "1px solid rgba(255,255,255,0.6)", borderRadius: 16, padding: "26px 22px", transition: `all 0.3s ${EASE}`, height: "100%" }}>
                 <div className="feat-icon" style={{ width: 46, height: 46, borderRadius: 13, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, background: `${f.color}14`, marginBottom: 14, transition: "transform 0.2s" }}>{f.icon}</div>
                 <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 8, letterSpacing: "-0.01em", color: C.text }}>{f.title}</h3>
                 <p style={{ fontSize: 13, color: C.muted, lineHeight: 1.65 }}>{f.desc}</p>
@@ -440,7 +471,7 @@ export default function HomePage() {
                 <h3 style={{ fontSize: 26, fontWeight: 800, letterSpacing: "-0.02em", marginBottom: 14, color: C.text }}>{r.title}</h3>
                 <p style={{ color: C.muted, lineHeight: 1.75, fontSize: 15 }}>{r.desc}</p>
               </div>
-              <div style={{ flex: 1, minWidth: 260, background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, minHeight: 160, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 8, boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
+              <div style={{ ...GLASS, flex: 1, minWidth: 260, border: "1px solid rgba(255,255,255,0.6)", borderRadius: 16, minHeight: 160, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 8 }}>
                 <div style={{ fontSize: 40 }}>{r.icon}</div>
                 <div style={{ fontSize: 13, color: C.muted }}>Interactive demo coming soon</div>
               </div>
@@ -555,7 +586,7 @@ export default function HomePage() {
             ["04", "Upgrade Anytime", "Add voice and video tutoring as you grow. Learn the way that works for you."],
           ].map(([n, t, d], i) => (
             <Reveal key={n} delay={i * 80}>
-              <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: "28px 20px", textAlign: "center", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
+              <div style={{ ...GLASS, border: "1px solid rgba(255,255,255,0.6)", borderRadius: 16, padding: "28px 20px", textAlign: "center" }}>
                 <div style={{ fontSize: 42, fontWeight: 800, letterSpacing: "-0.04em", lineHeight: 1, marginBottom: 14, background: `linear-gradient(135deg,${C.primary},rgba(79,124,255,0.3))`, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>{n}</div>
                 <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 8, color: C.text }}>{t}</h3>
                 <p style={{ fontSize: 13, color: C.muted, lineHeight: 1.65 }}>{d}</p>
@@ -585,7 +616,7 @@ export default function HomePage() {
               { phase: "Phase 4", status: "FUTURE", color: C.pink, items: ["AI Video Tutor (Premium)", "Avatar engine", "Whiteboard animations"] },
             ].map((p, i) => (
               <Reveal key={p.phase} delay={i * 80}>
-                <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: "24px 20px", height: "100%", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
+                <div style={{ ...GLASS, border: "1px solid rgba(255,255,255,0.6)", borderRadius: 16, padding: "24px 20px", height: "100%" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
                     <span style={{ fontWeight: 800, fontSize: 18, letterSpacing: "-0.02em", color: C.text }}>{p.phase}</span>
                     <Badge color={p.color}>{p.status}</Badge>
