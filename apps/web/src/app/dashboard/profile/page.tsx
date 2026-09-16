@@ -93,7 +93,7 @@ export default function ProfilePage() {
       
       {error && <div style={{ padding: 14, borderRadius: 12, background: "#fee2e2", color: "#b91c1c", border: "1px solid #fecaca" }}>{error}</div>}
       
-      <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 18 }}>
+      <div className="profile-grid" style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 18 }}>
         <section style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: 22 }}>
           <div style={{ fontSize: 24, fontWeight: 700 }}>{data?.user.name || "--"}</div>
           <div style={{ marginTop: 8, color: C.muted }}>{data?.user.email || "--"}</div>

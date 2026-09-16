@@ -142,6 +142,13 @@ select:focus-visible,
   }
 }
 
+/* ── Small shared responsive fixes ──────────────────────────────────────── */
+@media (max-width: 720px) {
+  .profile-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
 /* ── Utility animations ─────────────────────────────────────────────────── */
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(14px); }

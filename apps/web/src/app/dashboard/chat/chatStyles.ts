@@ -107,4 +107,24 @@ export const CHAT_STYLES = `
   .vw-send.on{background:linear-gradient(135deg,#4f6ef7,#7c3aed);color:#fff;box-shadow:0 4px 12px rgba(79,110,247,.25)}
   .vw-send.on:hover{transform:translateY(-1px)}.vw-send.off{background:#f1f5f9;color:#94a3b8;cursor:not-allowed;border:1px solid #e2e8f0}
   .vw-hint{margin:6px 0 0;font-size:11px;color:#64748b;text-align:center;font-weight:500}
+
+  /* ── Mobile ─────────────────────────────────────────────────────────── */
+  .vw-mobile-menu-btn{display:none;background:none;border:none;cursor:pointer;color:#1e293b;padding:4px;border-radius:8px;align-items:center;flex-shrink:0}
+  .vw-mobile-menu-btn:hover{background:rgba(0,0,0,.05)}
+  .vw-sidebar-backdrop{display:none}
+  @media (max-width: 860px) {
+    .vw-mobile-menu-btn{display:flex}
+    .vw-toggle{display:none}
+    .vw-sb{
+      position:fixed !important; top:0; left:0; height:100dvh;
+      width:280px !important; min-width:280px !important;
+      transform:translateX(-100%); transition:transform .25s ease;
+      z-index:1000; box-shadow:4px 0 24px rgba(0,0,0,.12);
+    }
+    .vw-sb.mobile-open{transform:translateX(0)}
+    .vw-sb .vw-sb-inner{width:280px !important; padding:20px !important; align-items:stretch !important}
+    .vw-sidebar-backdrop.open{display:block;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:900}
+    .vw-inner{max-width:96%}
+    .vw-header{padding:10px 14px}
+  }
 `;

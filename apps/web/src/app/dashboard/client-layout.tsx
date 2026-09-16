@@ -147,6 +147,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const path = usePathname();
   const router = useRouter();
   const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const [navigating, setNavigating] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -155,6 +156,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   useEffect(() => {
     if (path !== prevPath.current) {
       setNavigating(false);
+      setMobileOpen(false);
       prevPath.current = path;
     }
   }, [path]);
@@ -245,11 +247,65 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         .collapse-btn:hover { background: rgba(0,0,0,0.05); color: ${C.text}; }
         .page-content { transition: opacity 0.15s ease; }
         .page-content.navigating { opacity: 0.5; pointer-events: none; }
+
+        .mobile-topbar { display: none; }
+        .sidebar-backdrop { display: none; }
+        .mobile-menu-btn {
+          background: none; border: none; cursor: pointer; color: ${C.text};
+          padding: 6px; border-radius: 8px; display: flex; align-items: center;
+        }
+        .mobile-menu-btn:hover { background: rgba(0,0,0,0.05); }
+
+        @media (max-width: 860px) {
+          .dashboard-sidebar {
+            position: fixed !important;
+            top: 0; left: 0; height: 100dvh;
+            width: 260px !important;
+            min-width: 260px !important;
+            transform: translateX(-100%);
+            transition: transform 0.25s ease;
+            z-index: 1000;
+          }
+          .dashboard-sidebar.mobile-open { transform: translateX(0); }
+          .mobile-topbar {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 12px 16px; background: ${C.surface}; border-bottom: 1px solid ${C.border};
+            position: sticky; top: 0; z-index: 500;
+          }
+          .sidebar-backdrop.open {
+            display: block; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 900;
+          }
+        }
       `}</style>
 
       <TopProgressBar loading={navigating} />
 
-      <aside style={{
+      {/* Mobile-only top bar with hamburger — hidden on desktop via CSS */}
+      <div className="mobile-topbar">
+        <button
+          type="button"
+          className="mobile-menu-btn"
+          onClick={() => setMobileOpen(true)}
+          aria-label="Open navigation menu"
+          aria-expanded={mobileOpen}
+        >
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true">
+            <path d="M3 6h16M3 11h16M3 16h16" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+          </svg>
+        </button>
+        <Link href="/" style={{ textDecoration: "none", color: C.text }}>
+          <BrandLogo size={26} textSize={15} />
+        </Link>
+        <div style={{ width: 34 }} aria-hidden="true" />
+      </div>
+
+      <div
+        className={`sidebar-backdrop${mobileOpen ? " open" : ""}`}
+        onClick={() => setMobileOpen(false)}
+        aria-hidden="true"
+      />
+
+      <aside className={`dashboard-sidebar${mobileOpen ? " mobile-open" : ""}`} style={{
         width: collapsed ? 60 : 220,
         flexShrink: 0,
         background: C.surface,

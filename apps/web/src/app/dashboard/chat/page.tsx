@@ -42,6 +42,7 @@ function ChatContent() {
   const [loading,          setLoading]           = useState(false);
   const [error,            setError]             = useState<string | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed]  = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   // Guided mode state
   const [tutorMode,          setTutorMode]          = useState<"qa"|"guided">("qa");
@@ -75,6 +76,11 @@ function ChatContent() {
   useEffect(() => {
     chatBoxRef.current?.scrollTo({ top: chatBoxRef.current.scrollHeight, behavior: "smooth" });
   }, [messages.length, loading]);
+
+  // Close the mobile sidebar drawer once a topic is picked
+  useEffect(() => {
+    if (selectedTopicId) setMobileSidebarOpen(false);
+  }, [selectedTopicId]);
 
   // ── Topic selector helper ─────────────────────────────────────────────────
   const selectTopicById = useCallback((tid: string, list: Subject[] = subjects) => {
@@ -507,8 +513,15 @@ function ChatContent() {
       <style>{CHAT_STYLES}</style>
 
       <div className="vw-root">
+        {/* Mobile-only backdrop behind the slide-in sidebar */}
+        <div
+          className={`vw-sidebar-backdrop${mobileSidebarOpen ? " open" : ""}`}
+          onClick={() => setMobileSidebarOpen(false)}
+          aria-hidden="true"
+        />
+
         {/* ── SIDEBAR ──────────────────────────────────────────────────────── */}
-        <aside className={`vw-sb ${sidebarCollapsed ? "col" : "exp"}`}>
+        <aside className={`vw-sb ${sidebarCollapsed ? "col" : "exp"}${mobileSidebarOpen ? " mobile-open" : ""}`}>
           <button className="vw-toggle" onClick={() => setSidebarCollapsed(s => !s)}>
             {sidebarCollapsed ? <ChevronRight size={15}/> : <ChevronLeft size={15}/>}
           </button>
@@ -598,11 +611,24 @@ function ChatContent() {
         {/* ── MAIN CHAT ─────────────────────────────────────────────────────── */}
         <section className="vw-main">
           <header className="vw-header">
-            <div>
-              <h2 className="vw-h-title">Chat with Tutor</h2>
-              <p className="vw-h-sub">
-                {selectedTopic ? `📖 ${selectedTopic.name}` : "Select a topic to begin"}
-              </p>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <button
+                type="button"
+                className="vw-mobile-menu-btn"
+                onClick={() => setMobileSidebarOpen(true)}
+                aria-label="Open topics menu"
+                aria-expanded={mobileSidebarOpen}
+              >
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                  <path d="M3 5.5h14M3 10h14M3 14.5h14" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+                </svg>
+              </button>
+              <div>
+                <h2 className="vw-h-title">Chat with Tutor</h2>
+                <p className="vw-h-sub">
+                  {selectedTopic ? `📖 ${selectedTopic.name}` : "Select a topic to begin"}
+                </p>
+              </div>
             </div>
             <div className="vw-h-right">
               <button

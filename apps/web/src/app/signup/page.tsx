@@ -47,6 +47,9 @@ const EXTRA_STYLES = `
   .next-btn:hover { transform:translateY(-2px); box-shadow:0 8px 28px rgba(79,124,255,0.38), inset 0 1px 0 rgba(255,255,255,0.3); }
   .step-back { background:none; border:none; color:${C.muted}; cursor:pointer; font-size:13px; font-family:inherit; display:inline-flex; align-items:center; gap:5px; padding:0; transition:color 0.2s; margin-bottom:18px; }
   .step-back:hover { color:${C.text}; }
+  @media (max-width: 380px) {
+    .targets-grid { grid-template-columns: repeat(2,1fr) !important; }
+  }
 `;
 
 export default function SignupPage() {
@@ -276,7 +279,7 @@ export default function SignupPage() {
                     <label style={{ ...labelStyle, marginBottom: 8 }}>
                       {board.includes("JEE") || board.includes("NEET") ? "Select Target Year" : "Select your Class"}
                     </label>
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 6 }}>
+                    <div className="targets-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 6 }}>
                       {TARGETS[board].map(t => (
                         <button
                           key={t}

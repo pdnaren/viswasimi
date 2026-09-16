@@ -98,6 +98,7 @@ function FaqItem({ q, a }: { q: string; a: string }) {
 // ── MAIN PAGE ──────────────────────────────────────────────────
 export default function HomePage() {
   const [scrolled, setScrolled] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", onScroll);
@@ -123,6 +124,25 @@ export default function HomePage() {
         .msg:nth-child(4) { animation-delay: 2.5s }
         .nav-link { color: ${C.muted}; font-size: 14px; font-weight: 500; transition: color 0.2s; }
         .nav-link:hover { color: ${C.text}; }
+        .nav-mobile-toggle { display: none; background: none; border: none; cursor: pointer; padding: 6px; border-radius: 8px; }
+        .nav-mobile-toggle:hover { background: rgba(0,0,0,0.05); }
+        .nav-mobile-panel { display: none; }
+        @media (max-width: 760px) {
+          .nav-links-desktop, .nav-actions-desktop { display: none !important; }
+          .nav-mobile-toggle { display: flex; align-items: center; }
+          .nav-mobile-panel {
+            display: flex; flex-direction: column; gap: 4px;
+            position: fixed; top: 60px; left: 16px; right: 16px; z-index: 99;
+            background: ${C.surface}; border: 1px solid ${C.border}; border-radius: 16px;
+            padding: 16px; box-shadow: 0 12px 40px rgba(0,0,0,0.12);
+          }
+        }
+        .nav-mobile-link { color: ${C.text}; font-size: 15px; font-weight: 600; padding: 10px 8px; border-radius: 8px; }
+        .nav-mobile-link:hover { background: rgba(79,124,255,0.06); }
+        @media (max-width: 640px) {
+          .usp-grid { grid-template-columns: repeat(2,1fr) !important; row-gap: 20px; }
+          .usp-grid > div:nth-child(even) { border-right: none !important; }
+        }
         .feat-card:hover .feat-icon { transform: scale(1.1); }
         .feat-card:hover { transform: translateY(-4px); border-color: rgba(79,124,255,0.3); box-shadow: 0 16px 40px rgba(16,24,40,0.10), inset 0 1px 0 rgba(255,255,255,0.6); }
         ${BUTTON_STYLES}
@@ -162,17 +182,46 @@ export default function HomePage() {
           <BrandLogo size={30} textSize={18} />
         </div>
 
-        <nav aria-label="Primary" style={{ display: "flex", gap: 28 }}>
+        <nav aria-label="Primary" className="nav-links-desktop" style={{ display: "flex", gap: 28 }}>
           {["features", "plans", "roadmap", "faq"].map(l => (
             <a key={l} href={`#${l}`} className="nav-link" style={{ textTransform: "capitalize" }}>{l}</a>
           ))}
         </nav>
 
-        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+        <div className="nav-actions-desktop" style={{ display: "flex", gap: 10, alignItems: "center" }}>
           <Btn href="/dashboard" variant="ghost">Login</Btn>
           <Btn href="/signup" variant="primary">Start Free →</Btn>
         </div>
+
+        <button
+          type="button"
+          className="nav-mobile-toggle"
+          onClick={() => setMobileMenuOpen(o => !o)}
+          aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+          aria-expanded={mobileMenuOpen}
+        >
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true">
+            {mobileMenuOpen ? (
+              <path d="M5 5l12 12M17 5L5 17" stroke={C.text} strokeWidth="1.8" strokeLinecap="round" />
+            ) : (
+              <path d="M3 6h16M3 11h16M3 16h16" stroke={C.text} strokeWidth="1.8" strokeLinecap="round" />
+            )}
+          </svg>
+        </button>
       </header>
+
+      {/* Mobile nav dropdown */}
+      {mobileMenuOpen && (
+        <div className="nav-mobile-panel" role="dialog" aria-modal="true" aria-label="Menu">
+          {["features", "plans", "roadmap", "faq"].map(l => (
+            <a key={l} href={`#${l}`} className="nav-mobile-link" onClick={() => setMobileMenuOpen(false)} style={{ textTransform: "capitalize" }}>{l}</a>
+          ))}
+          <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 8 }}>
+            <Btn href="/dashboard" variant="ghost" block>Login</Btn>
+            <Btn href="/signup" variant="primary" block>Start Free →</Btn>
+          </div>
+        </div>
+      )}
 
       {/* ── HERO ── */}
       <section style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", padding: "120px 24px 80px", position: "relative", zIndex: 1 }}>
@@ -258,7 +307,7 @@ export default function HomePage() {
 
       {/* ── USP BAND ── */}
       <div style={{ position: "relative", zIndex: 1, borderTop: `1px solid ${C.border}`, borderBottom: `1px solid ${C.border}`, background: C.surface }}>
-        <div style={{ maxWidth: 1000, margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(4,1fr)", padding: "28px 24px" }}>
+        <div className="usp-grid" style={{ maxWidth: 1000, margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(4,1fr)", padding: "28px 24px" }}>
           {[
             ["🧠", "AI-Powered Tutoring", "Instant explanations and doubt-solving."],
             ["🏫", "Classes 6–12", "Aligned with CBSE, ICSE & State Boards."],
