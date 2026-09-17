@@ -155,4 +155,8 @@ PRD §19 asks for categorized error history (sign errors, formula selection, uni
 - `POST /api/admin/users/{id}/subscription` (`{planName, days}`) — deactivates the student's current subscription and starts a new one on the given plan; `days` omitted means no end date. This is a manual override for support/testing, not a Razorpay-integrated flow — see `apps/backend/app/api/routes/payments.py` for the actual payment path.
 - `GET /api/admin/usage/summary` — total students, signups in the last 7 days, active subscriptions by plan, total chat messages and completed assessments, average assessment score, and a mistake-category breakdown across all students. These are usage *counts*, not AI token/dollar cost — PRD §49/§55's actual cost-per-request tracking would need to wrap every OpenAI call site (`chat.py`, `assessments.py`, `rag_backend`) and isn't implemented yet.
 
+## Search
+
+`/dashboard/search` (frontend) and `GET /api/curriculum/search?q=` (backend, in `curriculum.py`) implement PRD §37. It matches the query against topic, chapter, and subject names within the student's own grade curriculum — a chapter- or subject-level match returns every topic under it — and each hit carries the same state/mastery/breadcrumb fields as the main curriculum view, so results link straight into "Learn" (`/dashboard/chat?topicId=`) or "Quiz" (`/dashboard/assessments?topicId=`). This is curriculum-metadata search, not full-text search over ingested textbook content — a semantic search over `rag_backend`'s vector store would be a heavier follow-up if needed.
+
 All routes require `role == "ADMIN"` via the existing `require_admin` dependency (unchanged from the curriculum/document routes).

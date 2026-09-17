@@ -26,6 +26,7 @@ export const C = {
 
 const NAV = [
   { href: "/dashboard",            icon: "⬡", label: "Dashboard"  },
+  { href: "/dashboard/search",     icon: "⌕", label: "Search"     },
   { href: "/dashboard/chat",       icon: "✦", label: "AI Tutor"   },
   { href: "/dashboard/curriculum", icon: "▦", label: "Curriculum" },
   { href: "/dashboard/assessments", icon: "◆", label: "Quizzes"    },

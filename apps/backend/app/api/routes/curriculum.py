@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session as DBSession
 from sqlalchemy import func
 
@@ -175,3 +175,30 @@ def curriculum_endpoint(
     db: DBSession = Depends(get_db),
 ):
     return _compute_curriculum(_topic_lookup(db, user))
+
+@router.get("/search")
+def search_curriculum(
+    q: str = Query(..., min_length=1, max_length=100),
+    user: User = Depends(get_current_user),
+    db: DBSession = Depends(get_db),
+):
+    """Search by concept/topic (PRD §37) — matches topic, chapter, or subject
+    name and returns each hit with its state/mastery/breadcrumb so the
+    frontend can link straight into the lesson or a practice quiz."""
+    needle = q.strip().lower()
+    data = _compute_curriculum(_topic_lookup(db, user))
+
+    results = []
+    for subject in data["subjects"]:
+        subject_match = needle in subject["name"].lower()
+        for chapter in subject["chapters"]:
+            chapter_match = subject_match or needle in chapter["name"].lower()
+            for topic in chapter["topics"]:
+                if chapter_match or needle in topic["name"].lower():
+                    results.append({
+                        **topic,
+                        "subjectId": subject["id"],
+                        "chapterId": chapter["id"],
+                    })
+
+    return {"query": q, "results": results[:30]}
