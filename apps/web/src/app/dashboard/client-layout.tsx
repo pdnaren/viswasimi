@@ -34,6 +34,7 @@ const NAV = [
   { href: "/dashboard/assessments", icon: "◆", label: "Quizzes"    },
   { href: "/dashboard/study-plan", icon: "◷", label: "Study Plan" },
   { href: "/dashboard/progress",   icon: "◎", label: "Progress"   },
+  { href: "/dashboard/parent-access", icon: "👪", label: "Parent Access" },
   { href: "/dashboard/profile",    icon: "◈", label: "Profile"    },
 ];
 

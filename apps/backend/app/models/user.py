@@ -34,3 +34,4 @@ class User(Base):
     subscriptions = relationship("UserSubscription", back_populates="user", cascade="all, delete-orphan")
     assessments = relationship("Assessment", back_populates="user", cascade="all, delete-orphan")
     mistakes = relationship("Mistake", back_populates="user", cascade="all, delete-orphan")
+    parent_access_tokens = relationship("ParentAccessToken", back_populates="user", cascade="all, delete-orphan")
