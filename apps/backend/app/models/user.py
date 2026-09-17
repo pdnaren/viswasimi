@@ -14,7 +14,10 @@ class User(Base):
     grade = Column(String, nullable=False)
     name = Column(String, nullable=False)
     email = Column(String, nullable=False, unique=True)
-    passwordHash = Column(String, nullable=False)
+    # Nullable because Google-signed-up accounts have no password until the
+    # user sets one via the forgot-password flow.
+    passwordHash = Column(String, nullable=True)
+    googleId = Column(String, nullable=True, unique=True)
     locale = Column(String, nullable=False, default="en-IN")
     timezone = Column(String, nullable=False, default="Asia/Kolkata")
     createdAt = Column(DateTime, nullable=False, default=datetime.utcnow)

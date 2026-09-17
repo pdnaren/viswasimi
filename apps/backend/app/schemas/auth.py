@@ -20,3 +20,8 @@ class ForgotPasswordRequest(BaseModel):
 class ResetPasswordRequest(BaseModel):
     token: str
     password: str = Field(..., min_length=8)
+
+class GoogleCompleteSignupRequest(BaseModel):
+    token: str
+    name: str = Field(..., min_length=2, max_length=50)
+    grade: str = Field(..., min_length=1, max_length=10)

@@ -57,3 +57,16 @@ export function getAuthHeaders(): HeadersInit {
   const token = getSessionToken();
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
+
+const GOOGLE_ERROR_MESSAGES: Record<string, string> = {
+  google_denied: "Google sign-in was cancelled.",
+  google_state_mismatch: "Your sign-in session expired. Please try again.",
+  google_unavailable: "Couldn't reach Google right now. Please try again.",
+  google_email_unverified: "Your Google account's email isn't verified.",
+  google_not_configured: "Google sign-in isn't set up on this server yet.",
+};
+
+export function getGoogleErrorMessage(code: string | null): string | null {
+  if (!code) return null;
+  return GOOGLE_ERROR_MESSAGES[code] || "Google sign-in failed. Please try again.";
+}

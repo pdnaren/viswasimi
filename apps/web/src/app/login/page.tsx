@@ -1,29 +1,31 @@
 "use client";
 
-import React, { useState } from "react";
-import { useRouter } from "next/navigation";
+import React, { useState, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { AuthShell, authCardStyle } from "@/app/components/auth/AuthShell";
 import { C } from "@/app/lib/theme";
 import { getApiUrl } from "@/app/lib/api";
-import { getApiErrorMessage, getFetchErrorMessage, parseJsonResponse, persistSessionToken } from "@/app/lib/auth-client";
+import { getApiErrorMessage, getFetchErrorMessage, getGoogleErrorMessage, parseJsonResponse, persistSessionToken } from "@/app/lib/auth-client";
 
 const EXTRA_STYLES = `
   .forgot-link { color: ${C.muted}; font-size: 13px; transition: color 0.2s; text-decoration: none; }
   .forgot-link:hover { color: ${C.primary}; }
 `;
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [showPass, setShowPass] = useState(false);
+  const displayError = submitError ?? getGoogleErrorMessage(searchParams.get("error"));
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError(null);
+    setSubmitError(null);
     try {
       setLoading(true);
       const loginUrl = getApiUrl("/api/auth/login");
@@ -33,14 +35,14 @@ export default function LoginPage() {
         body: JSON.stringify({ email, password }),
       });
       const data = await parseJsonResponse<{ sessionToken?: string; error?: string; detail?: string }>(res);
-      if (!res.ok) { setError(getApiErrorMessage(data, "Login failed")); return; }
+      if (!res.ok) { setSubmitError(getApiErrorMessage(data, "Login failed")); return; }
       if (data.sessionToken) {
         persistSessionToken(data.sessionToken);
       }
       router.push("/dashboard");
       router.refresh();
-    } catch (error) {
-      setError(getFetchErrorMessage(error, getApiUrl("/api/auth/login")));
+    } catch (err) {
+      setSubmitError(getFetchErrorMessage(err, getApiUrl("/api/auth/login")));
     } finally {
       setLoading(false);
     }
@@ -99,7 +101,7 @@ export default function LoginPage() {
         </div>
 
         {/* Error */}
-        {error && (
+        {displayError && (
           <div role="alert" style={{
             background: "rgba(239,68,68,0.08)",
             color: "#dc2626",
@@ -113,7 +115,7 @@ export default function LoginPage() {
             alignItems: "flex-start",
           }}>
             <span aria-hidden="true" style={{ flexShrink: 0, marginTop: 1 }}>⚠</span>
-            {error}
+            {displayError}
           </div>
         )}
 
@@ -180,24 +182,30 @@ export default function LoginPage() {
         {/* Divider */}
         <div className="divider"><span>or continue with</span></div>
 
-        {/* Google SSO — not wired up on the backend yet, so kept visibly disabled
-            instead of silently doing nothing when clicked. */}
-        <button className="social-btn" type="button" disabled aria-disabled="true" title="Google sign-in is coming soon" style={{ opacity: 0.55, cursor: "not-allowed" }}>
+        <a className="social-btn" href={getApiUrl("/api/auth/google/login")} style={{ textDecoration: "none" }}>
           <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
             <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z" fill="#4285F4"/>
             <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" fill="#34A853"/>
             <path d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/>
             <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
           </svg>
-          Continue with Google (coming soon)
-        </button>
+          Continue with Google
+        </a>
 
         {/* Sign up link */}
         <p style={{ textAlign: "center", marginTop: 22, fontSize: 13, color: C.muted }}>
-          Don't have an account?{" "}
+          Don&apos;t have an account?{" "}
           <Link href="/signup" className="text-link">Create one free</Link>
         </p>
       </div>
     </AuthShell>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div style={{ minHeight: "100vh", background: "#f4f6fb" }} />}>
+      <LoginForm />
+    </Suspense>
   );
 }

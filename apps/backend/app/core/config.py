@@ -31,6 +31,14 @@ class Settings(BaseSettings):
     RAZORPAY_KEY_ID: str | None = None
     RAZORPAY_KEY_SECRET: str | None = None
 
+    # Google OAuth ("Continue with Google") — optional; /api/auth/google/*
+    # routes return 501 until all three are set. GOOGLE_REDIRECT_URI must be
+    # the exact URI registered in Google Cloud Console, e.g.
+    # https://<backend-domain>/api/auth/google/callback
+    GOOGLE_CLIENT_ID: str | None = None
+    GOOGLE_CLIENT_SECRET: str | None = None
+    GOOGLE_REDIRECT_URI: str | None = None
+
     # Outgoing email (password reset) — optional; falls back to a dev preview
     SMTP_HOST: str | None = None
     SMTP_PORT: int = 587

@@ -5,8 +5,11 @@ import smtplib
 import logging
 from datetime import timedelta
 from email.message import EmailMessage
+from urllib.parse import urlencode
 
+import httpx
 from fastapi import APIRouter, Depends, Request, Response, Cookie, HTTPException
+from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session as DBSession
 
 from app.api.dependencies import (
@@ -14,13 +17,18 @@ from app.api.dependencies import (
 )
 from app.core.config import settings
 from app.core.rate_limit import limiter
+from app.core.security import sign_payload, verify_payload
 from app.models.user import User
 from app.models.auth import Session, PasswordResetToken
 from app.models.billing import SubscriptionPlan, UserSubscription
 from app.schemas.auth import (
     SignupRequest, LoginRequest, ChangePasswordRequest,
-    ForgotPasswordRequest, ResetPasswordRequest
+    ForgotPasswordRequest, ResetPasswordRequest, GoogleCompleteSignupRequest
 )
+
+GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
+GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
+GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v3/userinfo"
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -78,6 +86,27 @@ def valid_reset_token(db: DBSession, token: str) -> PasswordResetToken | None:
         return None
     return token_row
 
+def _attach_free_subscription(db: DBSession, user_id: str) -> None:
+    plan = db.query(SubscriptionPlan).filter(SubscriptionPlan.name == "free").first()
+    if not plan:
+        plan = SubscriptionPlan(id=f"plan_{uuid.uuid4().hex}", name="free", price=None, isActive=True)
+        db.add(plan)
+        db.flush()
+
+    db.add(
+        UserSubscription(
+            id=f"py_{uuid.uuid4().hex}",
+            userId=user_id,
+            planId=plan.id,
+            startsAt=_to_naive_utc(now_utc()),
+            endsAt=None,
+            isActive=True,
+        )
+    )
+
+def google_oauth_configured() -> bool:
+    return bool(settings.GOOGLE_CLIENT_ID and settings.GOOGLE_CLIENT_SECRET and settings.GOOGLE_REDIRECT_URI)
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Endpoints
 # ─────────────────────────────────────────────────────────────────────────────
@@ -119,23 +148,7 @@ def signup(
     )
     db.add(user)
     db.flush()
-
-    plan = db.query(SubscriptionPlan).filter(SubscriptionPlan.name == "free").first()
-    if not plan:
-        plan = SubscriptionPlan(id=f"plan_{uuid.uuid4().hex}", name="free", price=None, isActive=True)
-        db.add(plan)
-        db.flush()
-
-    db.add(
-        UserSubscription(
-            id=f"py_{uuid.uuid4().hex}",
-            userId=user.id,
-            planId=plan.id,
-            startsAt=_to_naive_utc(now_utc()),
-            endsAt=None,
-            isActive=True,
-        )
-    )
+    _attach_free_subscription(db, user.id)
 
     session = _create_session(db, user.id)
     db.commit()
@@ -152,7 +165,9 @@ def login(
     db: DBSession = Depends(get_db),
 ):
     user = db.query(User).filter(User.email == payload.email.lower().strip()).first()
-    if not user or not bcrypt.checkpw(payload.password.encode("utf-8"), user.passwordHash.encode("utf-8")):
+    if not user or not user.passwordHash:
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+    if not bcrypt.checkpw(payload.password.encode("utf-8"), user.passwordHash.encode("utf-8")):
         raise HTTPException(status_code=401, detail="Invalid email or password")
 
     db.query(PasswordResetToken).filter(
@@ -189,7 +204,12 @@ def change_password(
     user: User = Depends(get_current_user),
     db: DBSession = Depends(get_db),
 ):
-    if not bcrypt.checkpw(payload.currentPassword.encode("utf-8"), user.passwordHash.encode("utf-8")):
+    if not user.passwordHash or not bcrypt.checkpw(payload.currentPassword.encode("utf-8"), user.passwordHash.encode("utf-8")):
+        if not user.passwordHash:
+            raise HTTPException(
+                status_code=400,
+                detail="This account doesn't have a password yet. Use 'Forgot password' to set one.",
+            )
         raise HTTPException(status_code=400, detail="Current password is incorrect")
     
     user.passwordHash = bcrypt.hashpw(payload.newPassword.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
@@ -266,3 +286,156 @@ def reset_password(payload: ResetPasswordRequest, db: DBSession = Depends(get_db
     token_row.usedAt = _to_naive_utc(now_utc())
     db.commit()
     return {"message": "Password reset successful"}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Google OAuth ("Continue with Google")
+# ─────────────────────────────────────────────────────────────────────────────
+
+@router.get("/google/login")
+@limiter.limit("20/minute")
+def google_login(request: Request):
+    if not google_oauth_configured():
+        raise HTTPException(status_code=501, detail="Google sign-in is not configured on this server")
+
+    state = secrets.token_urlsafe(24)
+    params = {
+        "client_id": settings.GOOGLE_CLIENT_ID,
+        "redirect_uri": settings.GOOGLE_REDIRECT_URI,
+        "response_type": "code",
+        "scope": "openid email profile",
+        "state": state,
+        "access_type": "online",
+        "prompt": "select_account",
+    }
+    redirect = RedirectResponse(f"{GOOGLE_AUTH_URL}?{urlencode(params)}")
+    # Lax (not Strict) because this cookie must survive the top-level
+    # redirect back from accounts.google.com to our own /callback route.
+    redirect.set_cookie(
+        "google_oauth_state", state,
+        httponly=True, secure=settings.COOKIE_SECURE, samesite="lax",
+        max_age=600, path="/api/auth/google",
+    )
+    return redirect
+
+@router.get("/google/callback")
+def google_callback(
+    request: Request,
+    code: str | None = None,
+    state: str | None = None,
+    error: str | None = None,
+    google_oauth_state: str | None = Cookie(default=None),
+    db: DBSession = Depends(get_db),
+):
+    def denied(reason: str) -> RedirectResponse:
+        redirect = RedirectResponse(f"{settings.APP_URL}/login?error={reason}")
+        redirect.delete_cookie("google_oauth_state", path="/api/auth/google")
+        return redirect
+
+    if not google_oauth_configured():
+        return denied("google_not_configured")
+    if error or not code:
+        return denied("google_denied")
+    if not state or not google_oauth_state or not secrets.compare_digest(state, google_oauth_state):
+        return denied("google_state_mismatch")
+
+    try:
+        token_res = httpx.post(
+            GOOGLE_TOKEN_URL,
+            data={
+                "code": code,
+                "client_id": settings.GOOGLE_CLIENT_ID,
+                "client_secret": settings.GOOGLE_CLIENT_SECRET,
+                "redirect_uri": settings.GOOGLE_REDIRECT_URI,
+                "grant_type": "authorization_code",
+            },
+            timeout=10.0,
+        )
+        token_res.raise_for_status()
+        access_token = token_res.json().get("access_token")
+        if not access_token:
+            return denied("google_unavailable")
+
+        userinfo_res = httpx.get(
+            GOOGLE_USERINFO_URL,
+            headers={"Authorization": f"Bearer {access_token}"},
+            timeout=10.0,
+        )
+        userinfo_res.raise_for_status()
+        info = userinfo_res.json()
+    except httpx.HTTPError:
+        logger.exception("Google OAuth token/userinfo exchange failed")
+        return denied("google_unavailable")
+
+    google_id = info.get("sub")
+    email = (info.get("email") or "").lower().strip()
+    if not google_id or not email or not info.get("email_verified"):
+        return denied("google_email_unverified")
+
+    user = db.query(User).filter(User.googleId == google_id).first()
+    if not user:
+        user = db.query(User).filter(User.email == email).first()
+        if user:
+            user.googleId = google_id
+            db.commit()
+
+    if user:
+        session = _create_session(db, user.id)
+        db.commit()
+        redirect = RedirectResponse(f"{settings.APP_URL}/auth/callback?token={session.token}")
+    else:
+        # No account exists yet — the schema requires a grade/board, which
+        # Google doesn't give us, so hand the browser a signed token and let
+        # the signup page collect it before the account is actually created.
+        pending = sign_payload({"sub": google_id, "email": email, "name": info.get("name") or ""})
+        display_params = urlencode({"google_pending": pending, "name": info.get("name") or "", "email": email})
+        redirect = RedirectResponse(f"{settings.APP_URL}/signup?{display_params}")
+
+    redirect.delete_cookie("google_oauth_state", path="/api/auth/google")
+    return redirect
+
+@router.post("/google/complete-signup", status_code=201)
+@limiter.limit("10/minute")
+def google_complete_signup(
+    request: Request,
+    payload: GoogleCompleteSignupRequest,
+    response: Response,
+    db: DBSession = Depends(get_db),
+):
+    data = verify_payload(payload.token)
+    if not data or not data.get("sub") or not data.get("email"):
+        raise HTTPException(
+            status_code=400,
+            detail="This sign-up link has expired. Please try 'Continue with Google' again.",
+        )
+
+    google_id = data["sub"]
+    email = data["email"]
+
+    user = db.query(User).filter(User.googleId == google_id).first()
+    if not user:
+        user = db.query(User).filter(User.email == email).first()
+        if user:
+            user.googleId = google_id
+            db.commit()
+
+    if not user:
+        user = User(
+            id=f"user_{uuid.uuid4().hex}",
+            role="STUDENT",
+            grade=payload.grade.strip().upper(),
+            name=payload.name.strip(),
+            email=email,
+            passwordHash=None,
+            googleId=google_id,
+            locale=settings.DEFAULT_LOCALE,
+            timezone=settings.DEFAULT_TIMEZONE,
+            createdAt=_to_naive_utc(now_utc()),
+        )
+        db.add(user)
+        db.flush()
+        _attach_free_subscription(db, user.id)
+
+    session = _create_session(db, user.id)
+    db.commit()
+    response.set_cookie("viswasimi_session", session.token, **cookie_settings())
+    return {"user": _serialize_user(user), "sessionToken": session.token}
