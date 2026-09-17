@@ -8,7 +8,7 @@ import { getAuthHeaders, parseJsonResponse } from "@/app/lib/auth-client";
 import {
   Send, ChevronLeft, ChevronRight, PlayCircle, CheckCircle2,
   Lock, AlertCircle, ArrowRightCircle, Mic, Volume2, VolumeX,
-  Target,
+  Target, Video,
 } from "lucide-react";
 
 import ReactMarkdown from "react-markdown";
@@ -20,6 +20,7 @@ import { useSpeech } from "@/app/hooks/useSpeech";
 import type { Subject, PlanItem, Message } from "./types";
 import { getChapterStatus, getSubjectStatus, STATUS_EMOJI, extractCheckpoint, normaliseMath } from "./chatHelpers";
 import { PageImageModal } from "./components/PageImageModal";
+import { VideoModal } from "./components/VideoModal";
 import { CheckpointBanner } from "./components/CheckpointBanner";
 import { CHAT_STYLES } from "./chatStyles";
 
@@ -50,6 +51,9 @@ function ChatContent() {
 
   // Page image modal
   const [modalImageSrc,    setModalImageSrc]     = useState<string | null>(null);
+
+  // Topic video modal
+  const [showVideoModal,   setShowVideoModal]    = useState(false);
 
   // Pending checkpoint state:
   // - pendingCheckpoint: the question text from [CHECKPOINT] tag
@@ -163,6 +167,7 @@ function ChatContent() {
     setCurrentChunkIndex(0);
     setPendingCheckpoint(null);
     setCheckpointMsgId(null);
+    setShowVideoModal(false);
     stopSpeaking();
     setLoading(true);
 
@@ -510,6 +515,10 @@ function ChatContent() {
         <PageImageModal src={modalImageSrc} onClose={() => setModalImageSrc(null)} />
       )}
 
+      {showVideoModal && selectedTopic?.videoUrl && (
+        <VideoModal src={selectedTopic.videoUrl} onClose={() => setShowVideoModal(false)} />
+      )}
+
       <style>{CHAT_STYLES}</style>
 
       <div className="vw-root">
@@ -638,6 +647,16 @@ function ChatContent() {
                 {voiceEnabled ? <Volume2 size={14}/> : <VolumeX size={14}/>}
                 {voiceEnabled ? "Voice ON" : "Voice OFF"}
               </button>
+
+              {selectedTopic?.videoUrl && (
+                <button
+                  className="vw-btn-voice"
+                  onClick={() => setShowVideoModal(true)}
+                  title="Watch the explainer video for this topic"
+                >
+                  <Video size={14}/> Watch Video
+                </button>
+              )}
 
               {selectedTopic && (() => {
                 const pi         = planItems.find(p => p.topicId === selectedTopic.id);

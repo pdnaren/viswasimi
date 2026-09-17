@@ -5,10 +5,10 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { getApiUrl } from "@/app/lib/api";
 import { getAuthHeaders, parseJsonResponse } from "@/app/lib/auth-client";
-import { Upload, FileText, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
+import { Upload, FileText, CheckCircle, AlertCircle, Loader2, Video, Link2, Trash2 } from "lucide-react";
 
 // Types
-type Topic = { id: string; name: string; state: string };
+type Topic = { id: string; name: string; state: string; videoUrl?: string | null };
 type Chapter = { id: string; name: string; topics: Topic[] };
 type Subject = { id: string; name: string; chapters: Chapter[] };
 
@@ -30,6 +30,13 @@ export default function AdminUploadPage() {
   const [file, setFile] = useState<File | null>(null);
   const [status, setStatus] = useState<"idle" | "uploading" | "success" | "error">("idle");
   const [message, setMessage] = useState("");
+
+  // Topic video (optional, separate from the PDF upload)
+  const MAX_VIDEO_MB = 50;
+  const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [videoUrlInput, setVideoUrlInput] = useState("");
+  const [videoStatus, setVideoStatus] = useState<"idle" | "saving" | "success" | "error">("idle");
+  const [videoMessage, setVideoMessage] = useState("");
 
   // Effect 1: Verify Admin Status & Fetch Unique Grades from DB
   useEffect(() => {
@@ -96,6 +103,14 @@ export default function AdminUploadPage() {
     fetchCurriculum();
   }, [selectedGrade]);
 
+  // Effect 3: Reset the video form whenever the selected topic changes
+  useEffect(() => {
+    setVideoFile(null);
+    setVideoUrlInput("");
+    setVideoStatus("idle");
+    setVideoMessage("");
+  }, [selectedTopicId]);
+
   // ─── 2. DERIVED STATE & HANDLERS ────────────────────────────────────────────
   const selectedSubject = subjects.find((s) => s.id === selectedSubjId);
   const selectedChapter = selectedSubject?.chapters.find((c) => c.id === selectedChapId);
@@ -106,6 +121,91 @@ export default function AdminUploadPage() {
       setFile(e.target.files[0]);
       setStatus("idle");
       setMessage("");
+    }
+  };
+
+  const refreshCurriculum = async () => {
+    if (!selectedGrade) return;
+    const res = await fetch(getApiUrl(`/api/admin/subjects?grade=${selectedGrade}`), {
+      headers: { ...getAuthHeaders() },
+    });
+    if (res.ok) {
+      const data = await res.json();
+      setSubjects(data.subjects || []);
+    }
+  };
+
+  const handleVideoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const picked = e.target.files?.[0] || null;
+    if (picked && picked.size > MAX_VIDEO_MB * 1024 * 1024) {
+      setVideoStatus("error");
+      setVideoMessage(`Video is larger than ${MAX_VIDEO_MB} MB. Paste a hosted link (e.g. YouTube) instead.`);
+      e.target.value = "";
+      return;
+    }
+    setVideoFile(picked);
+    setVideoUrlInput("");
+    setVideoStatus("idle");
+    setVideoMessage("");
+  };
+
+  const handleVideoSave = async () => {
+    if (!selectedTopic) return;
+    if (!videoFile && !videoUrlInput.trim()) {
+      setVideoStatus("error");
+      setVideoMessage("Choose a video file or paste a video URL first.");
+      return;
+    }
+
+    setVideoStatus("saving");
+    setVideoMessage(videoFile ? "Uploading video to storage..." : "Saving video link...");
+
+    const formData = new FormData();
+    if (videoFile) {
+      formData.append("file", videoFile);
+    } else {
+      formData.append("videoUrl", videoUrlInput.trim());
+    }
+
+    try {
+      const res = await fetch(getApiUrl(`/api/admin/topic/${selectedTopic.id}/video`), {
+        method: "POST",
+        headers: { ...getAuthHeaders() },
+        body: formData,
+      });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.detail || "Could not save the video.");
+      }
+      setVideoStatus("success");
+      setVideoMessage("Video attached to this topic.");
+      setVideoFile(null);
+      setVideoUrlInput("");
+      const videoInput = document.getElementById("topic-video-upload") as HTMLInputElement;
+      if (videoInput) videoInput.value = "";
+      await refreshCurriculum();
+    } catch (err) {
+      setVideoStatus("error");
+      setVideoMessage(err instanceof Error ? err.message : "An unknown error occurred.");
+    }
+  };
+
+  const handleVideoClear = async () => {
+    if (!selectedTopic) return;
+    setVideoStatus("saving");
+    setVideoMessage("Removing video...");
+    try {
+      const res = await fetch(getApiUrl(`/api/admin/topic/${selectedTopic.id}/video`), {
+        method: "DELETE",
+        headers: { ...getAuthHeaders() },
+      });
+      if (!res.ok) throw new Error("Could not remove the video.");
+      setVideoStatus("idle");
+      setVideoMessage("");
+      await refreshCurriculum();
+    } catch (err) {
+      setVideoStatus("error");
+      setVideoMessage(err instanceof Error ? err.message : "An unknown error occurred.");
     }
   };
 
@@ -323,14 +423,107 @@ export default function AdminUploadPage() {
             </div>
           )}
 
-          <button 
-            type="submit" 
+          <button
+            type="submit"
             disabled={status === "uploading" || !file || !selectedTopicId}
             className="vw-btn"
           >
             {status === "uploading" ? "Uploading & Vectorizing..." : "Upload & Train AI"}
           </button>
         </form>
+
+        {selectedTopic && (
+          <div className="vw-admin-card" style={{ marginTop: 24 }}>
+            <div className="vw-form-group" style={{ marginBottom: 20 }}>
+              <label className="vw-form-label">Topic Video (optional)</label>
+              <p style={{ fontSize: 13, color: "#64748b", margin: "6px 0 0" }}>
+                Give <strong>{selectedTopic.name}</strong> an explainer video the student can watch
+                alongside the AI tutor. Upload a short clip (stored in Supabase Storage, max {MAX_VIDEO_MB} MB)
+                or paste a hosted link (YouTube, Vimeo, etc.) for longer videos.
+              </p>
+              {selectedTopic.videoUrl && (
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 10, fontSize: 13, fontWeight: 600, color: "#065f46" }}>
+                  <CheckCircle size={16} />
+                  Video attached
+                  <a href={selectedTopic.videoUrl} target="_blank" rel="noopener noreferrer" style={{ color: "#4f6ef7", fontWeight: 600 }}>
+                    Preview
+                  </a>
+                  <button
+                    type="button"
+                    onClick={handleVideoClear}
+                    disabled={videoStatus === "saving"}
+                    style={{ marginLeft: "auto", background: "none", border: "none", color: "#991b1b", cursor: "pointer", display: "flex", alignItems: "center", gap: 4, fontSize: 13, fontWeight: 600 }}
+                  >
+                    <Trash2 size={14} /> Remove
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div className="vw-grid" style={{ gridTemplateColumns: "1fr 1fr", alignItems: "start" }}>
+              <div
+                className="vw-file-drop"
+                style={{ padding: "24px 16px", marginBottom: 0 }}
+                onClick={() => document.getElementById("topic-video-upload")?.click()}
+              >
+                <input
+                  type="file"
+                  id="topic-video-upload"
+                  accept="video/mp4,video/webm,video/ogg,video/quicktime"
+                  onChange={handleVideoFileChange}
+                  className="vw-file-input"
+                />
+                <div className="vw-file-content">
+                  {videoFile ? (
+                    <>
+                      <Video size={32} color="#4f6ef7" />
+                      <p className="vw-file-title" style={{ fontSize: 14 }}>{videoFile.name}</p>
+                      <p className="vw-file-sub">{(videoFile.size / 1024 / 1024).toFixed(2)} MB</p>
+                    </>
+                  ) : (
+                    <>
+                      <Upload size={32} color="#94a3b8" />
+                      <p className="vw-file-title" style={{ fontSize: 14 }}>Upload a video file</p>
+                      <p className="vw-file-sub">MP4, WebM, Ogg or MOV — max {MAX_VIDEO_MB} MB</p>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              <div className="vw-form-group">
+                <label className="vw-form-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <Link2 size={12} /> Or paste a video URL
+                </label>
+                <input
+                  className="vw-input"
+                  type="url"
+                  placeholder="https://youtube.com/watch?v=..."
+                  value={videoUrlInput}
+                  onChange={(e) => { setVideoUrlInput(e.target.value); setVideoFile(null); }}
+                />
+              </div>
+            </div>
+
+            {videoStatus !== "idle" && (
+              <div className={`vw-status ${videoStatus === "saving" ? "uploading" : videoStatus}`} style={{ marginTop: 20, marginBottom: 0 }}>
+                {videoStatus === "saving" && <Loader2 size={20} className="vw-status-icon" style={{ animation: "spin 1s linear infinite" }} />}
+                {videoStatus === "success" && <CheckCircle size={20} className="vw-status-icon" />}
+                {videoStatus === "error" && <AlertCircle size={20} className="vw-status-icon" />}
+                <span>{videoMessage}</span>
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={handleVideoSave}
+              disabled={videoStatus === "saving" || (!videoFile && !videoUrlInput.trim())}
+              className="vw-btn"
+              style={{ marginTop: 20, background: "linear-gradient(135deg, #0ea5a4 0%, #0f766e 100%)" }}
+            >
+              {videoStatus === "saving" ? "Saving Video..." : "Save Video"}
+            </button>
+          </div>
+        )}
       </div>
     </>
   );

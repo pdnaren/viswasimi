@@ -34,6 +34,17 @@ def validate_pdf_bytes(content: bytes) -> bool:
     return content[:4] == b"%PDF"
 
 
+def validate_video_bytes(content: bytes) -> bool:
+    if MAGIC_AVAILABLE:
+        try:
+            mime = magic.from_buffer(content[:4096], mime=True)
+            return mime.startswith("video/")
+        except Exception:
+            pass
+    # Fallback container sniffing: MP4/MOV (ftyp box) or WebM/Matroska (EBML header).
+    return content[4:8] == b"ftyp" or content[:4] == b"\x1a\x45\xdf\xa3"
+
+
 async def upload_to_supabase(
     image_bytes: bytes, storage_path: str, content_type: str
 ) -> Optional[str]:

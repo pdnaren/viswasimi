@@ -16,6 +16,21 @@ from app.schemas.payload import AskRequest
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
+FIG_TOKEN_RE = re.compile(r"\[\[FIG:(\d+)\]\]")
+# Matches an unfinished "[[FIG:n]]" token sitting at the very end of a
+# buffer — "[", "[[", "[[F", ... "[[FIG:", "[[FIG:1", etc. — so it can be
+# held back until the rest of the token arrives in a later stream chunk.
+_INCOMPLETE_FIG_TAIL_RE = re.compile(r"\[{1,2}(?:F(?:I(?:G(?::\d*)?)?)?)?$")
+
+
+def _split_safe_tail(buf: str) -> tuple[str, str]:
+    """Splits buf into (safe_to_send, held_back) so a [[FIG:n]] token that's
+    split across two stream chunks is never flushed half-written."""
+    m = _INCOMPLETE_FIG_TAIL_RE.search(buf)
+    if not m:
+        return buf, ""
+    return buf[: m.start()], buf[m.start() :]
+
 
 def choose_model(query: str, mode: str = "qa") -> ChatOpenAI:
     if mode.lower() == "guided":
@@ -34,6 +49,7 @@ async def ask_question(
     try:
         context_text = ""
         image_trailer_text = ""
+        guided_image_refs: dict[int, str] = {}
         user_query = (
             (payload.query or payload.prompt or "").strip()
             or "Please teach me this section."
@@ -92,15 +108,23 @@ async def ask_question(
                 clean_url = image_url.replace("\n", "").replace("\r", "").strip()
                 if clean_url and clean_url not in section_images:
                     section_images.append(clean_url)
-            if section_images:
-                image_trailer_text = (
-                    "\n\n".join(f"![Page visual]({u})" for u in section_images) + "\n\n"
+
+            # Index images 1..N so the model can place a [[FIG:n]] token at the
+            # exact point in its explanation where that figure is discussed,
+            # instead of every image being bolted on after the whole page is
+            # taught (the old PAGE_IMAGES_ALREADY_DISPLAYED trailer approach).
+            guided_image_refs = {i + 1: u for i, u in enumerate(section_images)}
+            if guided_image_refs:
+                figure_instruction = (
+                    "\n\nPAGE_FIGURES_AVAILABLE: this page has the following visual figure(s): "
+                    + ", ".join(f"Figure {i}" for i in guided_image_refs)
+                    + ". Insert the exact token [[FIG:i]] (e.g. [[FIG:1]]) at the precise point in "
+                    "your explanation where you are describing what that figure shows — not bunched "
+                    "at the end unless that is genuinely where it belongs. Use each figure token "
+                    "exactly once, never invent figure numbers that weren't listed, and never write "
+                    "a real image URL yourself.\n"
                 )
-                context_text += (
-                    "\n\nPAGE_IMAGES_ALREADY_DISPLAYED:\n"
-                    + "\n".join(section_images)
-                    + "\n"
-                )
+                context_text += figure_instruction
 
             section_heading = metadata.get("heading", "this page")
             page_num = metadata.get("page_start", "?")
@@ -141,13 +165,16 @@ async def ask_question(
                 "2. Do not skip named quantities, units, symbols, formulas, figure references, or table rows that appear in the context.\n"
                 "3. If the context contains a table, reproduce it as a FULL Markdown table (same rows, "
                 "columns and header — do not summarize it away) and then explain what each row means.\n"
-                "4. If the context mentions a figure or diagram, explain what the context says about it.\n"
+                "4. If the context mentions a figure or diagram, explain what the context says about it. "
+                "If a PAGE_FIGURES_AVAILABLE list was given, place its [[FIG:i]] token right at that "
+                "point in your explanation, like a real tutor pointing at the diagram while describing it.\n"
                 "5. Keep total response under 1200 words, but prefer complete coverage over a short summary.\n"
                 f"{checkpoint_instruction}\n\n"
                 "RULES:\n"
                 "- Use ONLY the provided context.\n"
                 "- Do not invent examples, formulas, or image descriptions not in the context.\n"
-                "- Do not output markdown image tags.\n"
+                "- Never write a markdown image tag or a real URL yourself — only the [[FIG:i]] token "
+                "for figures listed in PAGE_FIGURES_AVAILABLE, if any were given.\n"
                 f"{checkpoint_rule}\n\n"
                 "Context:\n{{context}}"
             )
@@ -218,6 +245,25 @@ async def ask_question(
         async def stream():
             try:
                 buffer = ""
+                used_fig_indices: set[int] = set()
+
+                def substitute_figs(text: str) -> str:
+                    def _sub(m: "re.Match[str]") -> str:
+                        idx = int(m.group(1))
+                        if idx not in guided_image_refs:
+                            return ""
+                        used_fig_indices.add(idx)
+                        return f"\x00IMG{idx}\x00"
+                    return FIG_TOKEN_RE.sub(_sub, text)
+
+                def restore_fig_placeholders(text: str) -> str:
+                    for idx in used_fig_indices:
+                        text = text.replace(
+                            f"\x00IMG{idx}\x00",
+                            f"\n\n![Figure {idx}]({guided_image_refs[idx]})\n\n",
+                        )
+                    return text
+
                 async for chunk in chain.astream({
                     "context": context_text,
                     "query": user_query,
@@ -234,24 +280,47 @@ async def ask_question(
                         .replace("https\n", "https")
                     )
 
-                    if "![" in buffer:
-                        img_start = buffer.find("![")
-                        paren_open = buffer.find("(", img_start)
-                        if paren_open == -1:
-                            continue
-                        paren_close = buffer.find(")", paren_open)
-                        if paren_close == -1:
-                            continue
-                        buffer = re.sub(r"!\[[^\]]*\]\([^)]*\)", "", buffer)
-                        if not buffer.strip():
-                            buffer = ""
-                            continue
+                    if guided_image_refs:
+                        safe, held = _split_safe_tail(buffer)
+                        safe = substitute_figs(safe)
+                    else:
+                        safe, held = buffer, ""
 
-                    yield "data: " + json.dumps({"choices": [{"delta": {"content": buffer}}]}) + "\n\n"
-                    buffer = ""
+                    if "![" in safe:
+                        img_start = safe.find("![")
+                        paren_open = safe.find("(", img_start)
+                        if paren_open == -1:
+                            buffer = safe + held
+                            continue
+                        paren_close = safe.find(")", paren_open)
+                        if paren_close == -1:
+                            buffer = safe + held
+                            continue
+                        safe = re.sub(r"!\[[^\]]*\]\([^)]*\)", "", safe)
+
+                    if guided_image_refs:
+                        safe = restore_fig_placeholders(safe)
+
+                    if not safe.strip():
+                        buffer = held
+                        continue
+
+                    yield "data: " + json.dumps({"choices": [{"delta": {"content": safe}}]}) + "\n\n"
+                    buffer = held
 
                 if buffer:
+                    buffer = restore_fig_placeholders(buffer) if guided_image_refs else buffer
                     yield "data: " + json.dumps({"choices": [{"delta": {"content": buffer}}]}) + "\n\n"
+
+                # Any figure the model never referenced with a [[FIG:i]] token
+                # (it skipped teaching that part, or forgot) still gets shown,
+                # so nothing uploaded during ingestion silently disappears.
+                leftover_urls = [
+                    u for i, u in guided_image_refs.items() if i not in used_fig_indices
+                ]
+                if leftover_urls:
+                    trailer = "\n\n".join(f"![Figure]({u})" for u in leftover_urls) + "\n\n"
+                    yield "data: " + json.dumps({"choices": [{"delta": {"content": "\n\n" + trailer}}]}) + "\n\n"
 
                 if image_trailer_text:
                     yield "data: " + json.dumps({"choices": [{"delta": {"content": "\n\n" + image_trailer_text}}]}) + "\n\n"

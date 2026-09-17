@@ -8,7 +8,13 @@ from app.api.dependencies import require_internal_key
 from app.core.config import settings
 from app.db.vector_store import engine, vector_store
 from app.services.document_ai import build_documents_from_pages, parse_all_pages
-from app.services.storage import extract_page_images, sanitize_path_component, validate_pdf_bytes
+from app.services.storage import (
+    extract_page_images,
+    sanitize_path_component,
+    upload_to_supabase,
+    validate_pdf_bytes,
+    validate_video_bytes,
+)
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -111,3 +117,35 @@ async def ingest_pdf(
     finally:
         if doc:
             doc.close()
+
+
+@router.post("/upload-video")
+async def upload_video(
+    grade: str = Form(...),
+    subject: str = Form(...),
+    topicId: str = Form(...),
+    file: UploadFile = File(...),
+    _: None = Depends(require_internal_key),
+):
+    """Stores a topic's teaching video in the same Supabase bucket used for
+    page images, under a videos/ prefix, and returns its public URL."""
+    video_bytes = await file.read(settings.MAX_UPLOAD_BYTES + 1)
+    if len(video_bytes) > settings.MAX_UPLOAD_BYTES:
+        raise HTTPException(413, "Video too large. Maximum is 50 MB — paste a hosted link for longer videos.")
+    if not validate_video_bytes(video_bytes):
+        raise HTTPException(400, "Uploaded file is not a recognized video format.")
+
+    safe_grade = sanitize_path_component(grade)
+    safe_subject = sanitize_path_component(subject)
+    safe_topic = sanitize_path_component(topicId)
+    safe_filename = sanitize_path_component(os.path.basename(file.filename or "video.mp4"))
+
+    path = (
+        f"videos/{safe_grade}/{safe_subject}/{safe_topic}/{safe_filename}"
+    ).replace("\n", "").replace("\r", "").replace(" ", "_")
+
+    url = await upload_to_supabase(video_bytes, path, file.content_type or "video/mp4")
+    if not url:
+        raise HTTPException(502, "Could not upload video to storage. Please try again.")
+
+    return {"ok": True, "url": url.replace("\n", "").replace("\r", "").strip()}

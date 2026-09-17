@@ -55,7 +55,7 @@ def list_subjects(
                     {
                         "id": t.id, "name": t.name, "order": t.order,
                         "durationM": t.durationM, "prereqIds": t.prereqIds,
-                        "contentRef": t.contentRef,
+                        "contentRef": t.contentRef, "videoUrl": t.videoUrl,
                     }
                     for t in topics
                 ],
@@ -142,6 +142,87 @@ async def proxy_ingest(
         raise HTTPException(status_code=res.status_code, detail=res.text)
 
     return res.json()
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Topic video (explainer video shown alongside a topic's teaching session)
+# ─────────────────────────────────────────────────────────────────────────────
+
+ALLOWED_VIDEO_CONTENT_TYPES = {"video/mp4", "video/webm", "video/ogg", "video/quicktime"}
+
+
+@router.post("/topic/{topicId}/video")
+async def set_topic_video(
+    topicId: str,
+    videoUrl: str | None = Form(default=None),
+    file: UploadFile | None = File(default=None),
+    admin_user: User = Depends(require_admin),
+    db: DBSession = Depends(get_db),
+):
+    """Attach a teaching video to a topic — either an uploaded file (stored in
+    Supabase Storage via the RAG backend, capped at MAX_UPLOAD_BYTES like PDF
+    ingestion) or a pasted link (YouTube, Vimeo, or any hosted URL) for videos
+    too large to upload directly."""
+    topic = db.query(Topic).filter(Topic.id == topicId).first()
+    if not topic:
+        raise HTTPException(status_code=404, detail="Topic not found")
+
+    if file is not None:
+        if file.content_type not in ALLOWED_VIDEO_CONTENT_TYPES:
+            raise HTTPException(status_code=400, detail="Please upload an MP4, WebM, Ogg, or MOV video file.")
+
+        file_bytes = await file.read(settings.MAX_UPLOAD_BYTES + 1)
+        if len(file_bytes) > settings.MAX_UPLOAD_BYTES:
+            raise HTTPException(
+                status_code=413,
+                detail="Video too large to upload directly. For longer videos, paste a hosted link (e.g. YouTube) instead.",
+            )
+
+        chapter = db.query(Chapter).filter(Chapter.id == topic.chapterId).first()
+        subject = db.query(Subject).filter(Subject.id == chapter.subjectId).first() if chapter else None
+
+        try:
+            async with httpx.AsyncClient(timeout=300.0) as client:
+                res = await client.post(
+                    f"{settings.RAG_BACKEND_URL}/api/upload-video",
+                    headers={"X-Internal-Key": settings.INTERNAL_API_KEY},
+                    data={
+                        "grade": subject.grade if subject else "unknown",
+                        "subject": subject.name if subject else "unknown",
+                        "topicId": topicId,
+                    },
+                    files={"file": (file.filename, file_bytes, file.content_type)},
+                )
+        except httpx.HTTPError as exc:
+            raise HTTPException(status_code=502, detail=f"Could not reach the RAG backend: {exc}")
+
+        if res.status_code != 200:
+            raise HTTPException(status_code=res.status_code, detail=res.text)
+
+        topic.videoUrl = res.json().get("url")
+    elif videoUrl and videoUrl.strip():
+        cleaned = videoUrl.strip()
+        if not (cleaned.startswith("http://") or cleaned.startswith("https://")):
+            raise HTTPException(status_code=400, detail="Video URL must start with http:// or https://")
+        topic.videoUrl = cleaned
+    else:
+        raise HTTPException(status_code=400, detail="Provide either a video file or a video URL.")
+
+    db.commit()
+    return {"ok": True, "videoUrl": topic.videoUrl}
+
+
+@router.delete("/topic/{topicId}/video")
+def clear_topic_video(
+    topicId: str,
+    admin_user: User = Depends(require_admin),
+    db: DBSession = Depends(get_db),
+):
+    topic = db.query(Topic).filter(Topic.id == topicId).first()
+    if not topic:
+        raise HTTPException(status_code=404, detail="Topic not found")
+    topic.videoUrl = None
+    db.commit()
+    return {"ok": True}
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Student & subscription management

@@ -43,6 +43,7 @@ class Topic(Base):
     durationM = Column(Integer, nullable=False)
     prereqIds = Column(ARRAY(String), nullable=False, default=list)
     contentRef = Column(String, nullable=True)
+    videoUrl = Column(String, nullable=True)
 
     chapter = relationship("Chapter", back_populates="topics")
     progress_events = relationship("Progress", back_populates="topic")

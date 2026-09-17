@@ -1,4 +1,4 @@
-export type Topic    = { id: string; name: string; state: "done"|"in_progress"|"available"|"locked"; durationM: number; mastery: number };
+export type Topic    = { id: string; name: string; state: "done"|"in_progress"|"available"|"locked"; durationM: number; mastery: number; videoUrl?: string | null };
 export type Chapter  = { id: string; name: string; topics: Topic[] };
 export type Subject  = { id: string; name: string; chapters: Chapter[] };
 export type PlanItem = { id: string; topicId: string; topicName: string; state: string };
