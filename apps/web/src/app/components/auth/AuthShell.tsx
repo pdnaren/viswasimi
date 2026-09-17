@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { BrandLogo } from "@/app/components/brand-logo";
+import { ThemeToggle } from "@/app/components/ThemeToggle";
 import { C, GLASS, GLASS_BORDER } from "@/app/lib/theme";
 
 // CSS shared by every auth screen (login, signup, forgot/reset password).
@@ -25,10 +26,10 @@ const SHARED_AUTH_STYLES = `
   .submit-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(79,124,255,0.38), inset 0 1px 0 rgba(255,255,255,0.3); }
   .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
   .divider { display: flex; align-items: center; gap: 12px; margin: 18px 0; }
-  .divider::before, .divider::after { content:''; flex:1; height:1px; background: rgba(0,0,0,0.08); }
+  .divider::before, .divider::after { content:''; flex:1; height:1px; background: ${C.border}; }
   .divider span { font-size: 12px; color: ${C.muted}; white-space: nowrap; }
-  .social-btn { width: 100%; padding: 11px; border-radius: 10px; border: 1px solid rgba(0,0,0,0.09); background: #f9fafb; color: ${C.text}; font-size: 14px; font-weight: 500; font-family: inherit; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s; }
-  .social-btn:hover { background: #f0f3fa; border-color: rgba(0,0,0,0.15); }
+  .social-btn { width: 100%; padding: 11px; border-radius: 10px; border: 1px solid ${C.border}; background: var(--input-bg); color: ${C.text}; font-size: 14px; font-weight: 500; font-family: inherit; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s; }
+  .social-btn:hover { background: var(--card-hover); border-color: ${C.border}; }
 `;
 
 // Base look for the frosted card every auth screen renders — spread this
@@ -71,15 +72,18 @@ export function AuthShell({
       <header style={{
         position: "relative", zIndex: 10, padding: "18px 32px",
         display: "flex", alignItems: "center", justifyContent: "space-between",
-        borderBottom: "1px solid rgba(0,0,0,0.07)",
+        borderBottom: `1px solid ${C.border}`,
         backdropFilter: "blur(20px) saturate(180%)",
         WebkitBackdropFilter: "blur(20px) saturate(180%)",
-        background: "rgba(244,246,251,0.75)",
+        background: "var(--header-bg-scroll)",
       }}>
         <Link href="/" className="nav-logo-link">
           <BrandLogo size={34} textSize={18} />
         </Link>
-        <Link href={backHref} className="back-link">{backLabel}</Link>
+        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+          <ThemeToggle />
+          <Link href={backHref} className="back-link">{backLabel}</Link>
+        </div>
       </header>
 
       {/* MAIN */}

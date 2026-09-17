@@ -2,11 +2,15 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { BrandLogo } from "./components/brand-logo";
 import { Button as Btn, BUTTON_STYLES } from "@/app/components/ui/Button";
 import { Card } from "@/app/components/ui/Card";
 import { Badge, SectionLabel } from "@/app/components/ui/Badge";
+import { ThemeToggle } from "@/app/components/ThemeToggle";
 import { C, EASE, GLASS } from "@/app/lib/theme";
+import { getApiUrl } from "@/app/lib/api";
+import { clearSessionToken, getAuthHeaders, getSessionToken } from "@/app/lib/auth-client";
 
 // ── ANIMATED SECTIONS ──────────────────────────────────────────
 function Reveal({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) {
@@ -97,13 +101,34 @@ function FaqItem({ q, a }: { q: string; a: string }) {
 
 // ── MAIN PAGE ──────────────────────────────────────────────────
 export default function HomePage() {
+  const router = useRouter();
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [loggedIn, setLoggedIn] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
+
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", onScroll);
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  useEffect(() => {
+    void (async () => { setLoggedIn(!!getSessionToken()); })();
+  }, []);
+
+  async function handleLogout() {
+    setLoggingOut(true);
+    try {
+      await fetch(getApiUrl("/api/auth/logout"), { method: "GET", headers: { ...getAuthHeaders() } });
+    } finally {
+      clearSessionToken();
+      setLoggedIn(false);
+      setLoggingOut(false);
+      setMobileMenuOpen(false);
+      router.refresh();
+    }
+  }
 
   return (
     <div style={{ fontFamily: "'Sora', 'Segoe UI', sans-serif", background: C.bg, color: C.text, overflowX: "hidden", lineHeight: 1.6 }}>
@@ -173,7 +198,7 @@ export default function HomePage() {
         padding: "14px 32px", display: "flex", alignItems: "center", justifyContent: "space-between",
         backdropFilter: "blur(20px) saturate(180%)",
         WebkitBackdropFilter: "blur(20px) saturate(180%)",
-        background: scrolled ? "rgba(244,246,251,0.75)" : "rgba(244,246,251,0.45)",
+        background: scrolled ? "var(--header-bg-scroll)" : "var(--header-bg-top)",
         borderBottom: `1px solid ${scrolled ? C.border : "transparent"}`,
         transition: `all 0.3s ${EASE}`,
         boxShadow: scrolled ? "0 1px 12px rgba(0,0,0,0.06)" : "none",
@@ -189,8 +214,17 @@ export default function HomePage() {
         </nav>
 
         <div className="nav-actions-desktop" style={{ display: "flex", gap: 10, alignItems: "center" }}>
-          <Btn href="/dashboard" variant="ghost">Login</Btn>
-          <Btn href="/signup" variant="primary">Start Free →</Btn>
+          <ThemeToggle />
+          {loggedIn ? (
+            <Btn variant="ghost" onClick={handleLogout} disabled={loggingOut}>
+              {loggingOut ? "Logging out…" : "Logout"}
+            </Btn>
+          ) : (
+            <>
+              <Btn href="/login" variant="ghost">Login</Btn>
+              <Btn href="/signup" variant="primary">Start Free →</Btn>
+            </>
+          )}
         </div>
 
         <button
@@ -216,9 +250,20 @@ export default function HomePage() {
           {["features", "plans", "roadmap", "faq"].map(l => (
             <a key={l} href={`#${l}`} className="nav-mobile-link" onClick={() => setMobileMenuOpen(false)} style={{ textTransform: "capitalize" }}>{l}</a>
           ))}
-          <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 8 }}>
-            <Btn href="/dashboard" variant="ghost" block>Login</Btn>
-            <Btn href="/signup" variant="primary" block>Start Free →</Btn>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "4px 0 8px" }}>
+            <ThemeToggle />
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {loggedIn ? (
+              <Btn variant="ghost" onClick={handleLogout} disabled={loggingOut} block>
+                {loggingOut ? "Logging out…" : "Logout"}
+              </Btn>
+            ) : (
+              <>
+                <Btn href="/login" variant="ghost" block>Login</Btn>
+                <Btn href="/signup" variant="primary" block>Start Free →</Btn>
+              </>
+            )}
           </div>
         </div>
       )}
