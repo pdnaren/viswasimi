@@ -145,3 +145,14 @@ A chapter test pools questions across all of a chapter's topics; a topic quiz st
 ## How Mistake Intelligence works
 
 PRD §19 asks for categorized error history (sign errors, formula selection, unit conversion, calculation errors, concept misunderstanding), not just a raw score. When `POST /api/assessments/{id}/finish` scores a quiz, it batches every wrong answer from that attempt into a single LLM call (`_categorize_mistakes` in `assessments.py`) that classifies each one into a category from `MISTAKE_CATEGORIES` (`app/models/assessment.py`) — one call per finished quiz, not one per wrong answer, and it degrades to `OTHER` rather than failing the request if the LLM call errors. Each categorized mistake is stored as a `Mistake` row and returned immediately in the `finish` response (shown on the quiz results screen as "Where you lost points"); `GET /api/assessments/mistakes/summary` gives an all-time count per category for a student.
+
+## Admin: students, subscriptions, and usage
+
+`/dashboard/admin/students` (frontend) and the new routes in `apps/backend/app/api/routes/admin.py` fill out the rest of PRD §39's Admin Portal — student list/search, subscription overrides, and usage monitoring — beyond the curriculum/document management that already existed at `/dashboard/admin`. No new tables were needed; these read and write the existing `User`/`UserSubscription`/`Assessment`/`Mistake`/`ChatMessage` tables.
+
+- `GET /api/admin/users` — paginated, searchable (`?search=`) student list with each student's active plan.
+- `GET /api/admin/users/{id}` — one student's profile, active subscription, mastery/chat-activity counts, and recent completed assessments.
+- `POST /api/admin/users/{id}/subscription` (`{planName, days}`) — deactivates the student's current subscription and starts a new one on the given plan; `days` omitted means no end date. This is a manual override for support/testing, not a Razorpay-integrated flow — see `apps/backend/app/api/routes/payments.py` for the actual payment path.
+- `GET /api/admin/usage/summary` — total students, signups in the last 7 days, active subscriptions by plan, total chat messages and completed assessments, average assessment score, and a mistake-category breakdown across all students. These are usage *counts*, not AI token/dollar cost — PRD §49/§55's actual cost-per-request tracking would need to wrap every OpenAI call site (`chat.py`, `assessments.py`, `rag_backend`) and isn't implemented yet.
+
+All routes require `role == "ADMIN"` via the existing `require_admin` dependency (unchanged from the curriculum/document routes).

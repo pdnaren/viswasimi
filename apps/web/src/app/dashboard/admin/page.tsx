@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { getApiUrl } from "@/app/lib/api";
 import { getAuthHeaders, parseJsonResponse } from "@/app/lib/auth-client";
 import { Upload, FileText, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
@@ -212,6 +213,14 @@ export default function AdminUploadPage() {
         <header className="vw-admin-header">
           <h1>Knowledge Base Admin</h1>
           <p>Upload textbook PDFs to train the Viswasimi AI Tutor.</p>
+          <div style={{ marginTop: 12, display: "flex", gap: 8 }}>
+            <span style={{ fontSize: 13, fontWeight: 700, color: "#4f6ef7", padding: "6px 12px", borderRadius: 8, background: "#eef2ff" }}>
+              Content
+            </span>
+            <Link href="/dashboard/admin/students" style={{ fontSize: 13, fontWeight: 700, color: "#64748b", textDecoration: "none", padding: "6px 12px", borderRadius: 8 }}>
+              Students &amp; Usage
+            </Link>
+          </div>
         </header>
 
         <form onSubmit={handleUpload} className="vw-admin-card">
