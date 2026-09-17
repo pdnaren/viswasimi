@@ -216,9 +216,12 @@ export default function HomePage() {
         <div className="nav-actions-desktop" style={{ display: "flex", gap: 10, alignItems: "center" }}>
           <ThemeToggle />
           {loggedIn ? (
-            <Btn variant="ghost" onClick={handleLogout} disabled={loggingOut}>
-              {loggingOut ? "Logging out…" : "Logout"}
-            </Btn>
+            <>
+              <Btn href="/dashboard" variant="primary">Dashboard</Btn>
+              <Btn variant="ghost" onClick={handleLogout} disabled={loggingOut}>
+                {loggingOut ? "Logging out…" : "Logout"}
+              </Btn>
+            </>
           ) : (
             <>
               <Btn href="/login" variant="ghost">Login</Btn>
@@ -255,9 +258,12 @@ export default function HomePage() {
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {loggedIn ? (
-              <Btn variant="ghost" onClick={handleLogout} disabled={loggingOut} block>
-                {loggingOut ? "Logging out…" : "Logout"}
-              </Btn>
+              <>
+                <Btn href="/dashboard" variant="primary" block>Dashboard</Btn>
+                <Btn variant="ghost" onClick={handleLogout} disabled={loggingOut} block>
+                  {loggingOut ? "Logging out…" : "Logout"}
+                </Btn>
+              </>
             ) : (
               <>
                 <Btn href="/login" variant="ghost" block>Login</Btn>
