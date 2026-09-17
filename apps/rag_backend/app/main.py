@@ -2,7 +2,7 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import ask, ingest
+from app.api.routes import ask, ingest, quiz
 from app.core.config import settings
 
 app = FastAPI(title="Viswasimi RAG v5.3", version="5.3")
@@ -30,6 +30,7 @@ def api_health():
 
 app.include_router(ingest.router, prefix="/api", tags=["Ingestion"])
 app.include_router(ask.router, prefix="/api", tags=["RAG Chat"])
+app.include_router(quiz.router, prefix="/api", tags=["Quiz Generation"])
 
 if __name__ == "__main__":
     uvicorn.run("app.main:app", host="0.0.0.0", port=8001, reload=True)

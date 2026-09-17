@@ -1,6 +1,6 @@
 from app.schemas.auth import (
-    SignupRequest, LoginRequest, ChangePasswordRequest, 
-    ForgotPasswordRequest, ResetPasswordRequest
+    SignupRequest, LoginRequest, ChangePasswordRequest,
+    ForgotPasswordRequest, ResetPasswordRequest, GoogleCompleteSignupRequest
 )
 from app.schemas.user import UpdateLocaleRequest
 from app.schemas.tutoring import (
@@ -17,10 +17,12 @@ from app.schemas.curriculum import (
 from app.schemas.billing import (
     UpgradeSimulateRequest, PaymentVerifyRequest, UpgradeRequest
 )
+from app.schemas.assessment import StartAssessmentRequest, AnswerQuestionRequest
 
 __all__ = [
     # Auth
     "SignupRequest", "LoginRequest", "ChangePasswordRequest", "ForgotPasswordRequest", "ResetPasswordRequest",
+    "GoogleCompleteSignupRequest",
     # User
     "UpdateLocaleRequest",
     # Tutoring
@@ -31,5 +33,7 @@ __all__ = [
     # Curriculum
     "TopicSeedItem", "ChapterSeedItem", "SubjectSeedItem", "SubjectSeedRequest",
     # Billing
-    "UpgradeSimulateRequest", "PaymentVerifyRequest", "UpgradeRequest"
+    "UpgradeSimulateRequest", "PaymentVerifyRequest", "UpgradeRequest",
+    # Assessment
+    "StartAssessmentRequest", "AnswerQuestionRequest",
 ]

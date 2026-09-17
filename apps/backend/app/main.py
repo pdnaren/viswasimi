@@ -6,7 +6,7 @@ from slowapi.errors import RateLimitExceeded
 
 from app.core.config import settings
 from app.core.rate_limit import limiter
-from app.api.routes import chat,auth,progress,study_plan,curriculum,dashboard,payments, admin, profile
+from app.api.routes import chat,auth,progress,study_plan,curriculum,dashboard,payments, admin, profile, assessments
 
 # We will import and add the rest of the routers in Part 2
 # from app.api.routes import auth, admin, dashboard, payments, progress, study_plan
@@ -41,5 +41,6 @@ app.include_router(dashboard.router, prefix="/api/dashboard", tags=["Dashboard"]
 app.include_router(payments.router, prefix="/api/payments", tags=["Payments"])
 app.include_router(admin.router, prefix="/api/admin", tags=["Admin"])
 app.include_router(profile.router, prefix="/api/profile", tags=["Profile"])
+app.include_router(assessments.router, prefix="/api/assessments", tags=["Assessments"])
 # Add the cancel subscription route to profile router mapping
 profile.router.post("/cancel-subscription")(payments.cancel_subscription)

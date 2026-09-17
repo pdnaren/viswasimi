@@ -49,3 +49,4 @@ class Topic(Base):
     masteries = relationship("Mastery", back_populates="topic")
     plan_items = relationship("PlanItem", back_populates="topic")
     tutor_sessions = relationship("TutorSession", back_populates="topic")
+    questions = relationship("Question", back_populates="topic", cascade="all, delete-orphan")

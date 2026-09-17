@@ -32,3 +32,4 @@ class User(Base):
     voice_quotas = relationship("VoiceQuota", back_populates="user", cascade="all, delete-orphan")
     daily_progress = relationship("DailyProgress", back_populates="user", cascade="all, delete-orphan")
     subscriptions = relationship("UserSubscription", back_populates="user", cascade="all, delete-orphan")
+    assessments = relationship("Assessment", back_populates="user", cascade="all, delete-orphan")

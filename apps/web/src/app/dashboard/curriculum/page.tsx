@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { getApiUrl } from "@/app/lib/api";
 import { getAuthHeaders, parseJsonResponse } from "@/app/lib/auth-client";
 
@@ -115,12 +116,21 @@ function TopicRow({ topic }: { topic: TopicItem }) {
             )}
           </div>
         </div>
-        <div className="cur-topic-actions">
+        <div className="cur-topic-actions" style={{ display: "flex", gap: 6, flexShrink: 0 }}>
            {topic.state !== "locked" && (
-            <button className={`cur-action-btn ${added ? 'success' : ''} ${topic.state === 'done' ? 'revise' : ''}`}
-              onClick={handleAddToPlan} disabled={isAdding || added}>
-              {isAdding ? "..." : added ? "Added" : topic.state === 'done' ? "↺ Revise" : "+ Plan"}
-            </button>
+            <>
+              <Link
+                href={`/dashboard/assessments?topicId=${topic.id}&label=${encodeURIComponent(topic.name)}`}
+                className="cur-action-btn"
+                style={{ textDecoration: "none", display: "inline-block" }}
+              >
+                📝 Quiz
+              </Link>
+              <button className={`cur-action-btn ${added ? 'success' : ''} ${topic.state === 'done' ? 'revise' : ''}`}
+                onClick={handleAddToPlan} disabled={isAdding || added}>
+                {isAdding ? "..." : added ? "Added" : topic.state === 'done' ? "↺ Revise" : "+ Plan"}
+              </button>
+            </>
            )}
         </div>
       </div>
@@ -135,12 +145,6 @@ function TopicRow({ topic }: { topic: TopicItem }) {
 // ─── Chapter Block ────────────────────────────────────────────────────────────
 function ChapterBlock({ chapter }: { chapter: Chapter }) {
   const [open, setOpen] = useState(false);
-  
-  // DEBUG LINE: Open your browser console to see this!
-  console.log(`Chapter: ${chapter.name}`, { 
-    start: chapter.startedAt, 
-    end: chapter.completedAt 
-  });
 
   const doneCount = chapter.topics.filter(t => t.mastery >= 5).length;
   const totalCount = chapter.topics.length;

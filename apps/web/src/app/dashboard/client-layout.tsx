@@ -28,7 +28,8 @@ const NAV = [
   { href: "/dashboard",            icon: "⬡", label: "Dashboard"  },
   { href: "/dashboard/chat",       icon: "✦", label: "AI Tutor"   },
   { href: "/dashboard/curriculum", icon: "▦", label: "Curriculum" },
-  { href: "/dashboard/study-plan", icon: "◷", label: "Study Plan" }, 
+  { href: "/dashboard/assessments", icon: "◆", label: "Quizzes"    },
+  { href: "/dashboard/study-plan", icon: "◷", label: "Study Plan" },
   { href: "/dashboard/progress",   icon: "◎", label: "Progress"   },
   { href: "/dashboard/profile",    icon: "◈", label: "Profile"    },
 ];
