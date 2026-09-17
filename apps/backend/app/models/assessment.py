@@ -25,9 +25,10 @@ class Assessment(Base):
 
     id = Column(String, primary_key=True)
     userId = Column(String, ForeignKey("User.id", ondelete="CASCADE", onupdate="CASCADE"), nullable=False)
-    type = Column(String, nullable=False)  # TOPIC_QUIZ | CHAPTER_TEST
+    type = Column(String, nullable=False)  # TOPIC_QUIZ | CHAPTER_TEST | DIAGNOSTIC
     topicId = Column(String, ForeignKey("Topic.id", ondelete="SET NULL", onupdate="CASCADE"), nullable=True)
     chapterId = Column(String, ForeignKey("Chapter.id", ondelete="SET NULL", onupdate="CASCADE"), nullable=True)
+    subjectId = Column(String, ForeignKey("Subject.id", ondelete="SET NULL", onupdate="CASCADE"), nullable=True)
     status = Column(String, nullable=False, default="IN_PROGRESS")  # IN_PROGRESS | COMPLETED
     score = Column(Float, nullable=True)
     totalQuestions = Column(Integer, nullable=False, default=0)
@@ -37,6 +38,7 @@ class Assessment(Base):
     user = relationship("User", back_populates="assessments")
     topic = relationship("Topic")
     chapter = relationship("Chapter")
+    subject = relationship("Subject")
     items = relationship(
         "AssessmentQuestion", back_populates="assessment",
         cascade="all, delete-orphan", order_by="AssessmentQuestion.order",

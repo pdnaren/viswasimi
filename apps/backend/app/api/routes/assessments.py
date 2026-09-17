@@ -23,6 +23,7 @@ router = APIRouter()
 openai_client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
 
 MASTERY_PASS_THRESHOLD = 80
+DIAGNOSTIC_MAX_CHAPTERS = 8
 
 
 def _scope_topics(db: DBSession, payload: StartAssessmentRequest) -> tuple[list[Topic], str]:
@@ -32,13 +33,30 @@ def _scope_topics(db: DBSession, payload: StartAssessmentRequest) -> tuple[list[
             raise HTTPException(status_code=404, detail="Topic not found")
         return [topic], topic.name
 
-    chapter = db.query(Chapter).filter(Chapter.id == payload.chapterId).first()
-    if not chapter:
-        raise HTTPException(status_code=404, detail="Chapter not found")
-    topics = db.query(Topic).filter(Topic.chapterId == chapter.id).order_by(Topic.order.asc()).all()
+    if payload.chapterId:
+        chapter = db.query(Chapter).filter(Chapter.id == payload.chapterId).first()
+        if not chapter:
+            raise HTTPException(status_code=404, detail="Chapter not found")
+        topics = db.query(Topic).filter(Topic.chapterId == chapter.id).order_by(Topic.order.asc()).all()
+        if not topics:
+            raise HTTPException(status_code=400, detail="This chapter has no topics yet")
+        return topics, chapter.name
+
+    subject = db.query(Subject).filter(Subject.id == payload.subjectId).first()
+    if not subject:
+        raise HTTPException(status_code=404, detail="Subject not found")
+
+    # One topic per chapter (the first) gives a broad-but-short baseline
+    # across the subject, rather than a deep dive into any one chapter.
+    chapters = db.query(Chapter).filter(Chapter.subjectId == subject.id).order_by(Chapter.order.asc()).limit(DIAGNOSTIC_MAX_CHAPTERS).all()
+    topics = []
+    for chapter in chapters:
+        first_topic = db.query(Topic).filter(Topic.chapterId == chapter.id).order_by(Topic.order.asc()).first()
+        if first_topic:
+            topics.append(first_topic)
     if not topics:
-        raise HTTPException(status_code=400, detail="This chapter has no topics yet")
-    return topics, chapter.name
+        raise HTTPException(status_code=400, detail="This subject has no topics yet")
+    return topics, f"Diagnostic: {subject.name}"
 
 
 async def _generate_questions_for_topic(topic: Topic, subject_name: str, grade: str, count: int) -> list[dict]:
@@ -160,12 +178,14 @@ async def start_assessment(
             detail="No content has been ingested for this topic yet, so a quiz can't be generated. Ask an admin to upload the textbook chapter first.",
         )
 
+    assessment_type = "DIAGNOSTIC" if payload.subjectId else "CHAPTER_TEST" if payload.chapterId else "TOPIC_QUIZ"
     assessment = Assessment(
         id=f"asmt_{uuid.uuid4().hex}",
         userId=user.id,
-        type="CHAPTER_TEST" if payload.chapterId else "TOPIC_QUIZ",
+        type=assessment_type,
         topicId=payload.topicId,
         chapterId=payload.chapterId,
+        subjectId=payload.subjectId,
         status="IN_PROGRESS",
         totalQuestions=len(questions),
         startedAt=_to_naive_utc(now_utc()),
@@ -249,11 +269,12 @@ async def finish_assessment(
         q.id: q for q in db.query(Question).filter(Question.id.in_([item.questionId for item in items])).all()
     }
     topic_ids = {q.topicId for q in questions_by_id.values()}
+    progress_event = "DIAGNOSTIC" if assessment.type == "DIAGNOSTIC" else "QUIZ"
 
     for topic_id in topic_ids:
         db.add(Progress(
             id=f"prog_{uuid.uuid4().hex}", userId=user.id, topicId=topic_id,
-            event="QUIZ", score=float(score), ts=_to_naive_utc(now_utc()),
+            event=progress_event, score=float(score), ts=_to_naive_utc(now_utc()),
         ))
 
         if score >= MASTERY_PASS_THRESHOLD:
@@ -308,6 +329,9 @@ def assessment_history(
     )
 
     def label_for(a: Assessment) -> str:
+        if a.subjectId:
+            subject = db.query(Subject).filter(Subject.id == a.subjectId).first()
+            return f"Diagnostic: {subject.name}" if subject else "Diagnostic"
         if a.topicId:
             topic = db.query(Topic).filter(Topic.id == a.topicId).first()
             return topic.name if topic else "Topic quiz"

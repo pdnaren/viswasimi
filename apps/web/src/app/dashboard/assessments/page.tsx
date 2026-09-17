@@ -31,9 +31,10 @@ function AssessmentsContent() {
   const searchParams = useSearchParams();
   const topicId = searchParams.get("topicId");
   const chapterId = searchParams.get("chapterId");
+  const subjectId = searchParams.get("subjectId");
   const initialLabel = searchParams.get("label") || "";
 
-  const [stage, setStage] = useState<Stage>(topicId || chapterId ? "ready" : "picker");
+  const [stage, setStage] = useState<Stage>(topicId || chapterId || subjectId ? "ready" : "picker");
   const [error, setError] = useState<string | null>(null);
   const [label, setLabel] = useState(initialLabel);
 
@@ -70,7 +71,9 @@ function AssessmentsContent() {
       const res = await fetch(getApiUrl("/api/assessments/start"), {
         method: "POST",
         headers: { "Content-Type": "application/json", ...getAuthHeaders() },
-        body: JSON.stringify(topicId ? { topicId, count: 5 } : { chapterId, count: 8 }),
+        body: JSON.stringify(
+          topicId ? { topicId, count: 5 } : chapterId ? { chapterId, count: 8 } : { subjectId, count: 10 }
+        ),
       });
       const data = await parseJsonResponse<StartResponse & { detail?: string }>(res);
       if (!res.ok) {
@@ -162,6 +165,26 @@ function AssessmentsContent() {
 
       {stage === "picker" && (
         <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 16, padding: 24 }}>
+          {!pickerLoading && subjects.length > 0 && (
+            <div style={{ marginBottom: 24, paddingBottom: 20, borderBottom: "1px solid #f1f5f9" }}>
+              <h2 style={{ fontSize: 18, fontWeight: 700, color: "#1e293b", marginBottom: 4 }}>Diagnostic test</h2>
+              <p style={{ fontSize: 13, color: "#64748b", marginBottom: 12 }}>
+                New to a subject? Take a short baseline test to find your starting level.
+              </p>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                {subjects.map(s => (
+                  <button
+                    key={s.id}
+                    onClick={() => router.push(`/dashboard/assessments?subjectId=${s.id}&label=${encodeURIComponent(`Diagnostic: ${s.name}`)}`)}
+                    style={{ padding: "8px 14px", borderRadius: 8, border: "1px solid #c7d2fe", background: "#eef2ff", color: "#4338ca", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
+                  >
+                    🎯 {s.name} Diagnostic
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           <h2 style={{ fontSize: 18, fontWeight: 700, color: "#1e293b", marginBottom: 16 }}>Pick a topic to quiz yourself on</h2>
           {pickerLoading ? (
             <p style={{ color: "#94a3b8" }}>Loading your curriculum…</p>
@@ -203,7 +226,9 @@ function AssessmentsContent() {
           <div style={{ fontSize: 32, marginBottom: 12 }}>📝</div>
           <h2 style={{ fontSize: 20, fontWeight: 700, color: "#1e293b", marginBottom: 6 }}>{label || "Quiz"}</h2>
           <p style={{ color: "#64748b", fontSize: 14, marginBottom: 24 }}>
-            {chapterId ? "A mixed quiz covering this chapter's topics." : "A short quiz on this topic."}
+            {subjectId
+              ? "A short baseline test across this subject's chapters, to gauge your starting level."
+              : chapterId ? "A mixed quiz covering this chapter's topics." : "A short quiz on this topic."}
           </p>
           <button
             onClick={startQuiz}

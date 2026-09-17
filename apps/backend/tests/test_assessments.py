@@ -91,6 +91,22 @@ def make_topic(db_session, grade="CBSE-10"):
     return subject, chapter, topic
 
 
+def make_multi_chapter_subject(db_session, grade="CBSE-10", num_chapters=2):
+    subject = Subject(id=f"subj_{uuid.uuid4().hex}", grade=grade, name="Chemistry")
+    db_session.add(subject)
+    db_session.flush()
+    topics = []
+    for i in range(num_chapters):
+        chapter = Chapter(id=f"chap_{uuid.uuid4().hex}", subjectId=subject.id, name=f"Chapter {i+1}", order=i + 1)
+        db_session.add(chapter)
+        db_session.flush()
+        topic = Topic(id=f"top_{uuid.uuid4().hex}", chapterId=chapter.id, name=f"Topic {i+1}", order=1, durationM=30, prereqIds=[])
+        db_session.add(topic)
+        db_session.flush()
+        topics.append(topic)
+    return subject, topics
+
+
 def test_start_topic_quiz_generates_and_persists_questions(client, db_session, monkeypatch):
     _mock_rag(monkeypatch)
     signup_and_login(client)
@@ -113,6 +129,9 @@ def test_start_assessment_requires_exactly_one_scope(client, db_session):
 
     _, chapter, topic = make_topic(db_session)
     res = client.post("/api/assessments/start", json={"topicId": topic.id, "chapterId": chapter.id})
+    assert res.status_code == 422
+
+    res = client.post("/api/assessments/start", json={"topicId": topic.id, "subjectId": "subj_x"})
     assert res.status_code == 422
 
 
@@ -267,3 +286,39 @@ def test_assessment_history_lists_completed_only(client, db_session, monkeypatch
     assert len(history) == 1
     assert history[0]["label"] == "Uniform Motion"
     assert history[0]["score"] == 100
+
+
+def test_start_diagnostic_pulls_one_topic_per_chapter(client, db_session, monkeypatch):
+    _mock_rag(monkeypatch)
+    signup_and_login(client, email="diagnostic-start@example.com")
+    subject, topics = make_multi_chapter_subject(db_session, num_chapters=2)
+
+    res = client.post("/api/assessments/start", json={"subjectId": subject.id, "count": 4})
+    assert res.status_code == 200
+    body = res.json()
+    assert body["label"] == "Diagnostic: Chemistry"
+    assert len(body["questions"]) == 4  # 2 per topic across 2 topics
+
+
+def test_diagnostic_finish_updates_mastery_and_history_label(client, db_session, monkeypatch):
+    from app.models.progress import Progress
+
+    _mock_rag(monkeypatch)
+    signup_and_login(client, email="diagnostic-finish@example.com")
+    subject, topics = make_multi_chapter_subject(db_session, num_chapters=1)
+
+    start = client.post("/api/assessments/start", json={"subjectId": subject.id, "count": 2}).json()
+    assessment_id = start["assessmentId"]
+    correct_indices = [q["correctIndex"] for q in FAKE_QUESTIONS]
+    for i, q in enumerate(start["questions"]):
+        client.post(f"/api/assessments/{assessment_id}/answer", json={"itemId": q["itemId"], "selectedIndex": correct_indices[i]})
+
+    finish = client.post(f"/api/assessments/{assessment_id}/finish")
+    assert finish.status_code == 200
+    assert finish.json()["score"] == 100
+
+    progress = db_session.query(Progress).filter(Progress.topicId == topics[0].id, Progress.event == "DIAGNOSTIC").first()
+    assert progress is not None
+
+    history = client.get("/api/assessments/history").json()["assessments"]
+    assert history[0]["label"] == "Diagnostic: Chemistry"
