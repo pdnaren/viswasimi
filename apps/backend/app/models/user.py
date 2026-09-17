@@ -33,3 +33,4 @@ class User(Base):
     daily_progress = relationship("DailyProgress", back_populates="user", cascade="all, delete-orphan")
     subscriptions = relationship("UserSubscription", back_populates="user", cascade="all, delete-orphan")
     assessments = relationship("Assessment", back_populates="user", cascade="all, delete-orphan")
+    mistakes = relationship("Mistake", back_populates="user", cascade="all, delete-orphan")

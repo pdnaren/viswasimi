@@ -1,9 +1,11 @@
+import json
 import logging
 import uuid
 from datetime import timedelta
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException
+from openai import AsyncOpenAI
 from sqlalchemy import func
 from sqlalchemy.orm import Session as DBSession
 
@@ -12,11 +14,13 @@ from app.core.config import settings
 from app.models.curriculum import Chapter, Subject, Topic
 from app.models.progress import Mastery, Progress
 from app.models.user import User
-from app.models.assessment import Assessment, AssessmentQuestion, Question
+from app.models.assessment import Assessment, AssessmentQuestion, Question, Mistake, MISTAKE_CATEGORIES
 from app.schemas.assessment import AnswerQuestionRequest, StartAssessmentRequest
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+openai_client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
 
 MASTERY_PASS_THRESHOLD = 80
 
@@ -100,6 +104,47 @@ async def _collect_questions(db: DBSession, topics: list[Topic], total_count: in
     return collected[:total_count]
 
 
+async def _categorize_mistakes(wrong_items: list[AssessmentQuestion], questions_by_id: dict[str, Question]) -> list[str]:
+    """One batched LLM call classifies every wrong answer in a finished
+    assessment (PRD §19), instead of one call per mistake."""
+    numbered = []
+    for i, item in enumerate(wrong_items):
+        q = questions_by_id[item.questionId]
+        selected = q.options[item.selectedIndex] if item.selectedIndex is not None and item.selectedIndex < len(q.options) else "(no answer)"
+        numbered.append(
+            f"{i}. Question: {q.prompt}\n   Correct answer: {q.options[q.correctIndex]}\n   Student answered: {selected}"
+        )
+
+    prompt = (
+        "Classify each of these student mistakes into EXACTLY one category from this list:\n"
+        f"{', '.join(MISTAKE_CATEGORIES)}\n\n"
+        + "\n\n".join(numbered)
+        + "\n\nRespond with STRICT JSON only: a single array of category strings, "
+        "in the same order and count as the numbered mistakes above, e.g. "
+        '["CALCULATION_ERROR", "CONCEPT_MISUNDERSTANDING"]. No commentary.'
+    )
+
+    try:
+        response = await openai_client.chat.completions.create(
+            model="gpt-4o-mini", max_tokens=200, temperature=0,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        raw = response.choices[0].message.content.strip()
+        raw = raw.removeprefix("```json").removeprefix("```").removesuffix("```").strip()
+        parsed = json.loads(raw)
+        if not isinstance(parsed, list):
+            raise ValueError("not a list")
+    except Exception:
+        logger.exception("Mistake categorization failed; defaulting to OTHER")
+        return ["OTHER"] * len(wrong_items)
+
+    categories = []
+    for i in range(len(wrong_items)):
+        value = parsed[i] if i < len(parsed) else None
+        categories.append(value if value in MISTAKE_CATEGORIES else "OTHER")
+    return categories
+
+
 @router.post("/start")
 async def start_assessment(
     payload: StartAssessmentRequest,
@@ -181,7 +226,7 @@ def answer_question(
 
 
 @router.post("/{assessment_id}/finish")
-def finish_assessment(
+async def finish_assessment(
     assessment_id: str,
     user: User = Depends(get_current_user),
     db: DBSession = Depends(get_db),
@@ -200,9 +245,10 @@ def finish_assessment(
     assessment.score = float(score)
     assessment.completedAt = _to_naive_utc(now_utc())
 
-    topic_ids = {q.topicId for q in db.query(Question).filter(
-        Question.id.in_([item.questionId for item in items])
-    ).all()}
+    questions_by_id = {
+        q.id: q for q in db.query(Question).filter(Question.id.in_([item.questionId for item in items])).all()
+    }
+    topic_ids = {q.topicId for q in questions_by_id.values()}
 
     for topic_id in topic_ids:
         db.add(Progress(
@@ -221,6 +267,22 @@ def finish_assessment(
             intervals = [1, 3, 7, 14, 30]
             mastery.nextReviewAt = _to_naive_utc(now_utc() + timedelta(days=intervals[min(mastery.streak - 1, len(intervals) - 1)]))
 
+    wrong_items = [item for item in items if item.isCorrect is False]
+    mistakes_out = []
+    if wrong_items:
+        categories = await _categorize_mistakes(wrong_items, questions_by_id)
+        for item, category in zip(wrong_items, categories):
+            question = questions_by_id[item.questionId]
+            db.add(Mistake(
+                id=f"mist_{uuid.uuid4().hex}", userId=user.id, topicId=question.topicId,
+                assessmentQuestionId=item.id, category=category,
+            ))
+            mistakes_out.append({
+                "category": category,
+                "prompt": question.prompt,
+                "correctAnswer": question.options[question.correctIndex],
+            })
+
     db.commit()
 
     return {
@@ -228,6 +290,7 @@ def finish_assessment(
         "correctCount": correct_count,
         "totalQuestions": len(items),
         "topicsUpdated": list(topic_ids),
+        "mistakes": mistakes_out,
     }
 
 
@@ -262,4 +325,24 @@ def assessment_history(
             }
             for a in rows
         ]
+    }
+
+
+@router.get("/mistakes/summary")
+def mistakes_summary(
+    user: User = Depends(get_current_user),
+    db: DBSession = Depends(get_db),
+):
+    rows = (
+        db.query(Mistake.category, func.count(Mistake.id))
+        .filter(Mistake.userId == user.id)
+        .group_by(Mistake.category)
+        .all()
+    )
+    counts = {category: count for category, count in rows}
+    return {
+        "total": sum(counts.values()),
+        "byCategory": [
+            {"category": c, "count": counts.get(c, 0)} for c in MISTAKE_CATEGORIES if counts.get(c, 0) > 0
+        ],
     }

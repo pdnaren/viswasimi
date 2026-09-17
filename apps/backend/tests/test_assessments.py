@@ -6,10 +6,12 @@ in-teaching checkpoint question existed.
 
 httpx.AsyncClient is monkeypatched so no real call reaches the RAG backend.
 """
+import json
 import uuid
 
 import httpx
 
+from app.api.routes import assessments as assessments_module
 from app.models.curriculum import Subject, Chapter, Topic
 
 FAKE_QUESTIONS = [
@@ -47,6 +49,27 @@ def _mock_rag(monkeypatch, questions=None):
     def factory(*args, **kwargs):
         return _FakeAsyncClient(*args, questions=questions, **kwargs)
     monkeypatch.setattr(httpx, "AsyncClient", factory)
+
+
+def _mock_mistake_categorization(monkeypatch, categories=None):
+    categories = categories or ["CALCULATION_ERROR"]
+
+    class _FakeMessage:
+        def __init__(self, content):
+            self.content = content
+
+    class _FakeChoice:
+        def __init__(self, content):
+            self.message = _FakeMessage(content)
+
+    class _FakeCompletion:
+        def __init__(self, content):
+            self.choices = [_FakeChoice(content)]
+
+    async def fake_create(*args, **kwargs):
+        return _FakeCompletion(json.dumps(categories))
+
+    monkeypatch.setattr(assessments_module.openai_client.chat.completions, "create", fake_create)
 
 
 def signup_and_login(client, email="quiz-student@example.com", grade="CBSE-10"):
@@ -134,8 +157,10 @@ def test_answer_then_finish_computes_score_and_updates_mastery(client, db_sessio
 
 def test_finish_with_wrong_answers_gives_low_score_and_no_mastery_bump(client, db_session, monkeypatch):
     from app.models.progress import Mastery
+    from app.models.assessment import Mistake
 
     _mock_rag(monkeypatch)
+    _mock_mistake_categorization(monkeypatch, categories=["CALCULATION_ERROR", "CONCEPT_MISUNDERSTANDING"])
     signup_and_login(client, email="low-score@example.com")
     _, _, topic = make_topic(db_session)
 
@@ -147,14 +172,65 @@ def test_finish_with_wrong_answers_gives_low_score_and_no_mastery_bump(client, d
     client.post(f"/api/assessments/{assessment_id}/answer", json={"itemId": items[1]["itemId"], "selectedIndex": 0})
 
     finish = client.post(f"/api/assessments/{assessment_id}/finish")
-    assert finish.json()["score"] == 0
+    body = finish.json()
+    assert body["score"] == 0
+    assert len(body["mistakes"]) == 2
+    assert {m["category"] for m in body["mistakes"]} == {"CALCULATION_ERROR", "CONCEPT_MISUNDERSTANDING"}
 
     mastery = db_session.query(Mastery).filter(Mastery.topicId == topic.id).first()
     assert mastery is None
 
+    stored_mistakes = db_session.query(Mistake).filter(Mistake.topicId == topic.id).all()
+    assert len(stored_mistakes) == 2
+
+
+def test_mistake_categorization_falls_back_to_other_on_llm_failure(client, db_session, monkeypatch):
+    from app.models.assessment import Mistake
+
+    _mock_rag(monkeypatch)
+
+    async def failing_create(*args, **kwargs):
+        raise RuntimeError("openai down")
+    monkeypatch.setattr(assessments_module.openai_client.chat.completions, "create", failing_create)
+
+    signup_and_login(client, email="llm-down@example.com")
+    _, _, topic = make_topic(db_session)
+
+    start = client.post("/api/assessments/start", json={"topicId": topic.id, "count": 1}).json()
+    assessment_id = start["assessmentId"]
+    item_id = start["questions"][0]["itemId"]
+
+    client.post(f"/api/assessments/{assessment_id}/answer", json={"itemId": item_id, "selectedIndex": 0})
+    finish = client.post(f"/api/assessments/{assessment_id}/finish")
+
+    assert finish.status_code == 200
+    assert finish.json()["mistakes"][0]["category"] == "OTHER"
+
+    mistake = db_session.query(Mistake).filter(Mistake.topicId == topic.id).first()
+    assert mistake is not None
+    assert mistake.category == "OTHER"
+
+
+def test_mistakes_summary_groups_by_category(client, db_session, monkeypatch):
+    _mock_rag(monkeypatch)
+    _mock_mistake_categorization(monkeypatch, categories=["CALCULATION_ERROR"])
+    signup_and_login(client, email="summary-check@example.com")
+    _, _, topic = make_topic(db_session)
+
+    start = client.post("/api/assessments/start", json={"topicId": topic.id, "count": 1}).json()
+    assessment_id = start["assessmentId"]
+    item_id = start["questions"][0]["itemId"]
+    client.post(f"/api/assessments/{assessment_id}/answer", json={"itemId": item_id, "selectedIndex": 0})
+    client.post(f"/api/assessments/{assessment_id}/finish")
+
+    summary = client.get("/api/assessments/mistakes/summary").json()
+    assert summary["total"] == 1
+    assert summary["byCategory"] == [{"category": "CALCULATION_ERROR", "count": 1}]
+
 
 def test_cannot_answer_or_refinish_a_completed_assessment(client, db_session, monkeypatch):
     _mock_rag(monkeypatch)
+    _mock_mistake_categorization(monkeypatch)
     signup_and_login(client, email="double-finish@example.com")
     _, _, topic = make_topic(db_session)
 

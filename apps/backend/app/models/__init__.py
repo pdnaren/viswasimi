@@ -5,7 +5,7 @@ from app.models.auth import Session, PasswordResetToken
 from app.models.progress import Progress, Mastery, DailyProgress
 from app.models.tutoring import StudyPlan, PlanItem, TutorSession, VoiceQuota, ChatMessage
 from app.models.billing import SubscriptionPlan, UserSubscription
-from app.models.assessment import Question, Assessment, AssessmentQuestion
+from app.models.assessment import Question, Assessment, AssessmentQuestion, Mistake
 
 __all__ = [
     "Base",
@@ -28,4 +28,5 @@ __all__ = [
     "Question",
     "Assessment",
     "AssessmentQuestion",
+    "Mistake",
 ]

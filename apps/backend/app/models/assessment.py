@@ -56,3 +56,30 @@ class AssessmentQuestion(Base):
 
     assessment = relationship("Assessment", back_populates="items")
     question = relationship("Question", back_populates="attempts")
+
+
+MISTAKE_CATEGORIES = [
+    "SIGN_ERROR",
+    "FORMULA_SELECTION",
+    "UNIT_CONVERSION",
+    "CALCULATION_ERROR",
+    "CONCEPT_MISUNDERSTANDING",
+    "OTHER",
+]
+
+
+class Mistake(Base):
+    __tablename__ = "Mistake"
+
+    id = Column(String, primary_key=True)
+    userId = Column(String, ForeignKey("User.id", ondelete="CASCADE", onupdate="CASCADE"), nullable=False)
+    topicId = Column(String, ForeignKey("Topic.id", ondelete="CASCADE", onupdate="CASCADE"), nullable=False)
+    assessmentQuestionId = Column(
+        String, ForeignKey("AssessmentQuestion.id", ondelete="CASCADE", onupdate="CASCADE"), nullable=False,
+    )
+    category = Column(String, nullable=False, default="OTHER")
+    createdAt = Column(DateTime, nullable=False, default=datetime.utcnow)
+
+    user = relationship("User", back_populates="mistakes")
+    topic = relationship("Topic")
+    assessment_question = relationship("AssessmentQuestion")

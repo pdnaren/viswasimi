@@ -13,9 +13,18 @@ type Topic = { id: string; name: string; state: string };
 type QuizQuestion = { itemId: string; prompt: string; options: string[] };
 type StartResponse = { assessmentId: string; label: string; questions: QuizQuestion[] };
 type AnswerResponse = { isCorrect: boolean; correctIndex: number; explanation: string };
-type FinishResponse = { score: number; correctCount: number; totalQuestions: number };
+type Mistake = { category: string; prompt: string; correctAnswer: string };
+type FinishResponse = { score: number; correctCount: number; totalQuestions: number; mistakes: Mistake[] };
 
 type Stage = "picker" | "ready" | "starting" | "in_progress" | "completed" | "error";
+
+function formatCategory(category: string): string {
+  return category
+    .toLowerCase()
+    .split("_")
+    .map(w => w[0].toUpperCase() + w.slice(1))
+    .join(" ");
+}
 
 function AssessmentsContent() {
   const router = useRouter();
@@ -263,10 +272,26 @@ function AssessmentsContent() {
         <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 16, padding: 32, textAlign: "center", maxWidth: 480 }}>
           <div style={{ fontSize: 40, marginBottom: 12 }}>{report.score >= 80 ? "🏆" : report.score >= 50 ? "👍" : "📚"}</div>
           <h2 style={{ fontSize: 24, fontWeight: 800, color: "#1e293b", marginBottom: 8 }}>{report.score}%</h2>
-          <p style={{ color: "#64748b", fontSize: 14, marginBottom: 24 }}>
+          <p style={{ color: "#64748b", fontSize: 14, marginBottom: report.mistakes.length ? 20 : 24 }}>
             {report.correctCount} out of {report.totalQuestions} correct on <strong>{label}</strong>
             {report.score >= 80 ? " — mastery updated!" : ". Keep practicing this topic to improve mastery."}
           </p>
+
+          {report.mistakes.length > 0 && (
+            <div style={{ textAlign: "left", background: "#fef2f2", borderRadius: 12, padding: 16, marginBottom: 24 }}>
+              <p style={{ fontSize: 13, fontWeight: 700, color: "#991b1b", marginBottom: 10 }}>Where you lost points</p>
+              {report.mistakes.map((m, i) => (
+                <div key={i} style={{ fontSize: 13, color: "#7f1d1d", marginBottom: i < report.mistakes.length - 1 ? 10 : 0 }}>
+                  <span style={{ display: "inline-block", background: "#fee2e2", borderRadius: 6, padding: "2px 8px", fontSize: 11, fontWeight: 700, marginBottom: 4 }}>
+                    {formatCategory(m.category)}
+                  </span>
+                  <div>{m.prompt}</div>
+                  <div style={{ color: "#059669", fontWeight: 600 }}>Correct: {m.correctAnswer}</div>
+                </div>
+              ))}
+            </div>
+          )}
+
           <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
             <Link href="/dashboard/curriculum" style={{ padding: "10px 20px", borderRadius: 8, background: "#f1f5f9", color: "#334155", fontWeight: 700, fontSize: 13, textDecoration: "none" }}>
               Back to Curriculum
