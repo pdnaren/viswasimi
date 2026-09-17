@@ -6,6 +6,7 @@ import { getApiUrl } from "@/app/lib/api";
 import { clearSessionToken, getAuthHeaders, parseJsonResponse } from "@/app/lib/auth-client";
 import { usePathname, useRouter } from "next/navigation";
 import { BrandLogo } from "@/app/components/brand-logo";
+import { NotificationBell } from "@/app/components/NotificationBell";
 
 export const C = {
   bg: "#f4f6fb",
@@ -299,7 +300,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <Link href="/" style={{ textDecoration: "none", color: C.text }}>
           <BrandLogo size={26} textSize={15} />
         </Link>
-        <div style={{ width: 34 }} aria-hidden="true" />
+        <NotificationBell />
       </div>
 
       <div
@@ -323,11 +324,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <div style={{ display: "flex", alignItems: "center", justifyContent: collapsed ? "center" : "space-between", padding: "0 4px", marginBottom: 28 }}>
           {!collapsed && <Link href="/" style={{ textDecoration: "none", color: C.text }}><BrandLogo size={28} textSize={16} /></Link>}
           {collapsed && <BrandLogo size={26} showText={false} />}
-          <button className="collapse-btn" onClick={() => setCollapsed(!collapsed)}>
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <path d={collapsed ? "M5 2l5 5-5 5" : "M9 2L4 7l5 5"} stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
+          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            {!collapsed && <NotificationBell />}
+            <button className="collapse-btn" onClick={() => setCollapsed(!collapsed)}>
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <path d={collapsed ? "M5 2l5 5-5 5" : "M9 2L4 7l5 5"} stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+          </div>
         </div>
 
         <nav style={{ display: "flex", flexDirection: "column", gap: 4, flex: 1 }}>

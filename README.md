@@ -159,4 +159,14 @@ PRD §19 asks for categorized error history (sign errors, formula selection, uni
 
 `/dashboard/search` (frontend) and `GET /api/curriculum/search?q=` (backend, in `curriculum.py`) implement PRD §37. It matches the query against topic, chapter, and subject names within the student's own grade curriculum — a chapter- or subject-level match returns every topic under it — and each hit carries the same state/mastery/breadcrumb fields as the main curriculum view, so results link straight into "Learn" (`/dashboard/chat?topicId=`) or "Quiz" (`/dashboard/assessments?topicId=`). This is curriculum-metadata search, not full-text search over ingested textbook content — a semantic search over `rag_backend`'s vector store would be a heavier follow-up if needed.
 
+## Notifications
+
+PRD §36 lists daily-lesson-ready, revision-due, lesson-incomplete, and revision-reminder notifications. There's no push notification or email-digest infrastructure in this app (that would need Vercel Cron or a similar scheduler — a deployment-infrastructure change), so `GET /api/notifications` (`apps/backend/app/api/routes/notifications.py`) computes the same information on demand from data that already exists — no new table, no background job:
+
+- **Revision due** — topics from `Mastery` where `nextReviewAt` has passed (reuses the same query shape as `mastery/due` in `progress.py`).
+- **Lesson incomplete** — overdue `PlanItem`s from previous days.
+- **Daily lesson ready** — today's scheduled `PlanItem`s, shown only when nothing is overdue (an overdue backlog takes priority over "here's something new").
+
+The frontend bell (`apps/web/src/app/components/NotificationBell.tsx`) is mounted in both the desktop sidebar and the mobile top bar, and polls this endpoint once per page load — it's a dropdown list linking into the relevant topic, not a system push notification.
+
 All routes require `role == "ADMIN"` via the existing `require_admin` dependency (unchanged from the curriculum/document routes).
