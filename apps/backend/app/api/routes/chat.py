@@ -1,9 +1,10 @@
+import base64
 import uuid
 import json
 import logging
 import httpx
 from datetime import datetime, timezone
-from fastapi import APIRouter, Depends, Request, HTTPException
+from fastapi import APIRouter, Depends, Request, HTTPException, UploadFile, File, Form
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session as DBSession
 from sqlalchemy import func
@@ -254,3 +255,73 @@ def get_chat_history(
             for msg in reversed(messages)
         ]
     }
+
+HOMEWORK_ALLOWED_IMAGE_TYPES = {"image/png", "image/jpeg", "image/jpg", "image/webp"}
+HOMEWORK_GUIDANCE = {
+    "hint": "Give ONLY a gentle hint pointing toward the right approach. Do NOT reveal the final answer or the full steps.",
+    "steps": "Walk through the solution step by step, explaining the reasoning at each step, ending with the final answer.",
+    "solution": "Give the complete worked solution with the final answer clearly stated.",
+}
+
+@router.post("/homework")
+@limiter.limit("15/minute")
+async def homework_help(
+    request: Request,
+    image: UploadFile = File(...),
+    question: str = Form(default=""),
+    assistanceLevel: str = Form(default="hint"),
+    user: User = Depends(get_current_user),
+):
+    """Homework Mode (PRD §30): a photo/screenshot of a question in, tutor
+    guidance out. Stateless by design — no persistence, since this is a
+    one-shot lookup rather than part of the ongoing teaching session.
+    Images only for now; PDF homework uploads would need the same
+    ingestion pipeline as curriculum documents (see admin.py) and aren't
+    supported here yet.
+    """
+    if assistanceLevel not in HOMEWORK_GUIDANCE:
+        assistanceLevel = "hint"
+
+    if image.content_type not in HOMEWORK_ALLOWED_IMAGE_TYPES:
+        raise HTTPException(
+            status_code=400,
+            detail="Please upload a photo or screenshot (PNG/JPEG/WEBP). PDF homework uploads aren't supported yet.",
+        )
+
+    image_bytes = await image.read(settings.MAX_UPLOAD_BYTES + 1)
+    if len(image_bytes) > settings.MAX_UPLOAD_BYTES:
+        raise HTTPException(status_code=413, detail="Image too large.")
+
+    data_url = f"data:{image.content_type};base64,{base64.b64encode(image_bytes).decode('utf-8')}"
+
+    sys_msg = (
+        "You are Viswasimi, an AI tutor helping a student with homework from an uploaded photo.\n"
+        f"Student's grade/board: {user.grade}.\n"
+        "1. First identify the subject and the specific concept/topic the question is testing.\n"
+        f"2. Then help according to this instruction: {HOMEWORK_GUIDANCE[assistanceLevel]}\n"
+        "3. Always explain WHY, not just WHAT — the goal is for the student to learn, not just get an answer.\n"
+        "4. If the image is unclear, cut off, or doesn't look like a homework question, say so honestly instead of guessing.\n"
+        "Respond in clear, simple language appropriate for the student's grade. Use $...$ for inline math and $$...$$ for block equations."
+    )
+
+    try:
+        response = await openai_client.chat.completions.create(
+            model="gpt-4o-mini",
+            max_tokens=900,
+            messages=[
+                {"role": "system", "content": sys_msg},
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": question.strip() or "Please help me with this homework question."},
+                        {"type": "image_url", "image_url": {"url": data_url}},
+                    ],
+                },
+            ],
+        )
+        answer = response.choices[0].message.content
+    except Exception:
+        logger.exception("Homework help request failed")
+        raise HTTPException(status_code=502, detail="Could not process the homework image right now. Please try again.")
+
+    return {"assistanceLevel": assistanceLevel, "answer": answer}

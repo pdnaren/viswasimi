@@ -169,4 +169,12 @@ PRD §36 lists daily-lesson-ready, revision-due, lesson-incomplete, and revision
 
 The frontend bell (`apps/web/src/app/components/NotificationBell.tsx`) is mounted in both the desktop sidebar and the mobile top bar, and polls this endpoint once per page load — it's a dropdown list linking into the relevant topic, not a system push notification.
 
+## Homework Mode
+
+PRD §30: upload a photo/PDF/question, get a hint, step-by-step guidance, or a full solution, "default should encourage learning." `POST /api/chat/homework` (`chat.py`) accepts an image upload plus an optional typed question and an `assistanceLevel` (`hint` default / `steps` / `solution`), sends it directly to `gpt-4o-mini`'s vision input (no separate OCR step), and returns tutor guidance grounded in the actual uploaded question. It's stateless by design — a one-shot lookup, not persisted, since it's not part of the ongoing curriculum-linked teaching session the rest of the app tracks.
+
+Photos/screenshots only for now (`PNG`/`JPEG`/`WEBP`) — a PDF upload returns a clear `400` rather than silently failing. PDF support would need the same ingestion pipeline curriculum documents use (`admin.py` → `rag_backend`), which is a heavier addition than the vision-based photo flow.
+
+Frontend: new `/dashboard/homework` page — upload, optional note, an assistance-level picker, and the rendered answer (reusing the same Markdown/math renderer the AI Tutor chat uses).
+
 All routes require `role == "ADMIN"` via the existing `require_admin` dependency (unchanged from the curriculum/document routes).
