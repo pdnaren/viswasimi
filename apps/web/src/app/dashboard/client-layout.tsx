@@ -7,23 +7,8 @@ import { clearSessionToken, getAuthHeaders, parseJsonResponse } from "@/app/lib/
 import { usePathname, useRouter } from "next/navigation";
 import { BrandLogo } from "@/app/components/brand-logo";
 import { NotificationBell } from "@/app/components/NotificationBell";
-
-export const C = {
-  bg: "#f4f6fb",
-  surface: "#ffffff",
-  card: "#ffffff",
-  cardHover: "#f0f3fa",
-  border: "rgba(0,0,0,0.08)",
-  borderHover: "rgba(0,0,0,0.15)",
-  primary: "#4f7cff",
-  secondary: "#00b896",
-  amber: "#f59e0b",
-  pink: "#f43f8e",
-  red: "#ef4444",
-  text: "#111827",
-  muted: "#6b7280",
-  glow: "rgba(79,124,255,0.15)",
-} as const;
+import { ThemeToggle } from "@/app/components/ThemeToggle";
+import { C } from "@/app/lib/theme";
 
 const NAV = [
   { href: "/dashboard",            icon: "⬡", label: "Dashboard"  },
@@ -221,7 +206,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 99px; }
+        ::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 99px; }
 
         @keyframes pulse    { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.6;transform:scale(1.3)} }
         @keyframes fadeUp    { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
@@ -302,7 +287,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <Link href="/" style={{ textDecoration: "none", color: C.text }}>
           <BrandLogo size={26} textSize={15} />
         </Link>
-        <NotificationBell />
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <ThemeToggle style={{ width: 30, height: 30 }} />
+          <NotificationBell />
+        </div>
       </div>
 
       <div
@@ -357,6 +345,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               </Link>
             </div>
           )}
+          <div style={{ display: "flex", justifyContent: collapsed ? "center" : "space-between", alignItems: "center", gap: 8 }}>
+            {!collapsed && <span style={{ fontSize: 11, fontWeight: 600, color: C.muted }}>Theme</span>}
+            <ThemeToggle style={{ width: 30, height: 30 }} />
+          </div>
           <button type="button" onClick={handleLogout} className="nav-item" style={{ justifyContent: collapsed ? "center" : "flex-start", color: C.red }}>
             <span className="icon">⊗</span>
             {!collapsed && <span>Logout</span>}

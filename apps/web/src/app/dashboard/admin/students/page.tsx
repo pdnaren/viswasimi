@@ -25,9 +25,9 @@ function formatCategory(category: string): string {
 
 function StatCard({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 12, padding: "16px 20px", minWidth: 140 }}>
-      <div style={{ fontSize: 12, color: "#64748b", fontWeight: 600, marginBottom: 4 }}>{label}</div>
-      <div style={{ fontSize: 24, fontWeight: 800, color: "#0f172a" }}>{value}</div>
+    <div style={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 12, padding: "16px 20px", minWidth: 140 }}>
+      <div style={{ fontSize: 12, color: "var(--muted)", fontWeight: 600, marginBottom: 4 }}>{label}</div>
+      <div style={{ fontSize: 24, fontWeight: 800, color: "var(--text)" }}>{value}</div>
     </div>
   );
 }
@@ -59,13 +59,13 @@ function PlanEditor({ userId, currentPlan, onApplied }: { userId: string; curren
 
   return (
     <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
-      <select value={planName} onChange={e => setPlanName(e.target.value)} style={{ padding: "6px 8px", borderRadius: 6, border: "1px solid #e2e8f0", fontSize: 12 }}>
+      <select value={planName} onChange={e => setPlanName(e.target.value)} style={{ padding: "6px 8px", borderRadius: 6, border: "1px solid var(--border)", fontSize: 12, background: "var(--input-bg)", color: "var(--text)" }}>
         <option value="free">free</option>
         <option value="basic">basic</option>
       </select>
       <input
         type="number" placeholder="days (optional)" value={days} onChange={e => setDays(e.target.value)}
-        style={{ width: 110, padding: "6px 8px", borderRadius: 6, border: "1px solid #e2e8f0", fontSize: 12 }}
+        style={{ width: 110, padding: "6px 8px", borderRadius: 6, border: "1px solid var(--border)", fontSize: 12, background: "var(--input-bg)", color: "var(--text)" }}
       />
       <button onClick={apply} disabled={saving} style={{ padding: "6px 12px", borderRadius: 6, border: "none", background: "#4f6ef7", color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
         {saving ? "…" : "Apply"}
@@ -151,7 +151,7 @@ export default function AdminStudentsPage() {
 
   if (checking || !isAuthorized) {
     return (
-      <div style={{ height: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#f8fafc" }}>
+      <div style={{ height: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--bg)" }}>
         <Loader2 size={32} color="#4f6ef7" style={{ animation: "spin 1s linear infinite" }} />
         <style>{`@keyframes spin { 100% { transform: rotate(360deg); } }`}</style>
       </div>
@@ -163,13 +163,13 @@ export default function AdminStudentsPage() {
   return (
     <div style={{ padding: 40, maxWidth: 1200, margin: "0 auto", fontFamily: "'DM Sans', sans-serif" }}>
       <header style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: 28, fontWeight: 700, color: "#0f172a", marginBottom: 4 }}>Students &amp; Usage</h1>
-        <p style={{ color: "#64748b", fontSize: 14 }}>Manage students, subscriptions, and monitor platform usage.</p>
+        <h1 style={{ fontSize: 28, fontWeight: 700, color: "var(--text)", marginBottom: 4 }}>Students &amp; Usage</h1>
+        <p style={{ color: "var(--muted)", fontSize: 14 }}>Manage students, subscriptions, and monitor platform usage.</p>
         <div style={{ marginTop: 12, display: "flex", gap: 8 }}>
-          <Link href="/dashboard/admin" style={{ fontSize: 13, fontWeight: 700, color: "#64748b", textDecoration: "none", padding: "6px 12px", borderRadius: 8 }}>
+          <Link href="/dashboard/admin" style={{ fontSize: 13, fontWeight: 700, color: "var(--muted)", textDecoration: "none", padding: "6px 12px", borderRadius: 8 }}>
             Content
           </Link>
-          <span style={{ fontSize: 13, fontWeight: 700, color: "#4f6ef7", textDecoration: "none", padding: "6px 12px", borderRadius: 8, background: "#eef2ff" }}>
+          <span style={{ fontSize: 13, fontWeight: 700, color: "#4f6ef7", textDecoration: "none", padding: "6px 12px", borderRadius: 8, background: "rgba(79,110,247,0.10)" }}>
             Students &amp; Usage
           </span>
         </div>
@@ -185,19 +185,19 @@ export default function AdminStudentsPage() {
             <StatCard label="Avg Assessment Score" value={usage.averageAssessmentScore !== null ? `${usage.averageAssessmentScore}%` : "—"} />
           </div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 24 }}>
-            <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 12, padding: 16, flex: "1 1 220px" }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: "#334155", marginBottom: 8 }}>Active plans</div>
+            <div style={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 12, padding: 16, flex: "1 1 220px" }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text)", marginBottom: 8 }}>Active plans</div>
               {usage.activeSubscriptionsByPlan.map(p => (
-                <div key={p.planName} style={{ display: "flex", justifyContent: "space-between", fontSize: 13, color: "#475569", marginBottom: 4 }}>
+                <div key={p.planName} style={{ display: "flex", justifyContent: "space-between", fontSize: 13, color: "var(--muted)", marginBottom: 4 }}>
                   <span>{p.planName}</span><span style={{ fontWeight: 700 }}>{p.count}</span>
                 </div>
               ))}
             </div>
             {usage.mistakesByCategory.length > 0 && (
-              <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 12, padding: 16, flex: "1 1 260px" }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: "#334155", marginBottom: 8 }}>Common mistakes (all students)</div>
+              <div style={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 12, padding: 16, flex: "1 1 260px" }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text)", marginBottom: 8 }}>Common mistakes (all students)</div>
                 {usage.mistakesByCategory.map(m => (
-                  <div key={m.category} style={{ display: "flex", justifyContent: "space-between", fontSize: 13, color: "#475569", marginBottom: 4 }}>
+                  <div key={m.category} style={{ display: "flex", justifyContent: "space-between", fontSize: 13, color: "var(--muted)", marginBottom: 4 }}>
                     <span>{formatCategory(m.category)}</span><span style={{ fontWeight: 700 }}>{m.count}</span>
                   </div>
                 ))}
@@ -207,26 +207,26 @@ export default function AdminStudentsPage() {
         </section>
       )}
 
-      <section style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 16, padding: 24 }}>
+      <section style={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 16, padding: 24 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, gap: 12, flexWrap: "wrap" }}>
-          <h2 style={{ fontSize: 16, fontWeight: 700, color: "#1e293b" }}>Students ({total})</h2>
+          <h2 style={{ fontSize: 16, fontWeight: 700, color: "var(--text)" }}>Students ({total})</h2>
           <input
             placeholder="Search name or email…"
             value={search}
             onChange={e => { setSearch(e.target.value); setPage(1); }}
-            style={{ padding: "8px 12px", borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 13, width: 240 }}
+            style={{ padding: "8px 12px", borderRadius: 8, border: "1px solid var(--border)", fontSize: 13, width: 240, background: "var(--input-bg)", color: "var(--text)" }}
           />
         </div>
 
         {loadingUsers ? (
-          <p style={{ color: "#94a3b8", fontSize: 14 }}>Loading students…</p>
+          <p style={{ color: "var(--muted)", fontSize: 14 }}>Loading students…</p>
         ) : users.length === 0 ? (
-          <p style={{ color: "#94a3b8", fontSize: 14 }}>No students found.</p>
+          <p style={{ color: "var(--muted)", fontSize: 14 }}>No students found.</p>
         ) : (
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
               <thead>
-                <tr style={{ textAlign: "left", color: "#64748b", borderBottom: "1px solid #e2e8f0" }}>
+                <tr style={{ textAlign: "left", color: "var(--muted)", borderBottom: "1px solid var(--border)" }}>
                   <th style={{ padding: "8px 6px" }}>Name</th>
                   <th style={{ padding: "8px 6px" }}>Email</th>
                   <th style={{ padding: "8px 6px" }}>Grade</th>
@@ -237,12 +237,12 @@ export default function AdminStudentsPage() {
               </thead>
               <tbody>
                 {users.map(u => (
-                  <tr key={u.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
-                    <td style={{ padding: "10px 6px", fontWeight: 600, color: "#1e293b" }}>{u.name}</td>
-                    <td style={{ padding: "10px 6px", color: "#475569" }}>{u.email}</td>
-                    <td style={{ padding: "10px 6px", color: "#475569" }}>{u.grade}</td>
-                    <td style={{ padding: "10px 6px", color: "#475569" }}>{u.role}</td>
-                    <td style={{ padding: "10px 6px", color: "#94a3b8" }}>{u.createdAt ? new Date(u.createdAt).toLocaleDateString() : "—"}</td>
+                  <tr key={u.id} style={{ borderBottom: "1px solid var(--border)" }}>
+                    <td style={{ padding: "10px 6px", fontWeight: 600, color: "var(--text)" }}>{u.name}</td>
+                    <td style={{ padding: "10px 6px", color: "var(--muted)" }}>{u.email}</td>
+                    <td style={{ padding: "10px 6px", color: "var(--muted)" }}>{u.grade}</td>
+                    <td style={{ padding: "10px 6px", color: "var(--muted)" }}>{u.role}</td>
+                    <td style={{ padding: "10px 6px", color: "var(--muted)" }}>{u.createdAt ? new Date(u.createdAt).toLocaleDateString() : "—"}</td>
                     <td style={{ padding: "10px 6px" }}>
                       <PlanEditor userId={u.id} currentPlan={u.planName} onApplied={loadUsers} />
                     </td>
@@ -255,11 +255,11 @@ export default function AdminStudentsPage() {
 
         {totalPages > 1 && (
           <div style={{ display: "flex", justifyContent: "center", gap: 10, marginTop: 16 }}>
-            <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page <= 1} style={{ padding: "6px 12px", borderRadius: 6, border: "1px solid #e2e8f0", background: "#fff", fontSize: 12, cursor: page <= 1 ? "not-allowed" : "pointer" }}>
+            <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page <= 1} style={{ padding: "6px 12px", borderRadius: 6, border: "1px solid var(--border)", background: "var(--card)", color: "var(--text)", fontSize: 12, cursor: page <= 1 ? "not-allowed" : "pointer" }}>
               ← Prev
             </button>
-            <span style={{ fontSize: 12, color: "#64748b", alignSelf: "center" }}>Page {page} of {totalPages}</span>
-            <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page >= totalPages} style={{ padding: "6px 12px", borderRadius: 6, border: "1px solid #e2e8f0", background: "#fff", fontSize: 12, cursor: page >= totalPages ? "not-allowed" : "pointer" }}>
+            <span style={{ fontSize: 12, color: "var(--muted)", alignSelf: "center" }}>Page {page} of {totalPages}</span>
+            <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page >= totalPages} style={{ padding: "6px 12px", borderRadius: 6, border: "1px solid var(--border)", background: "var(--card)", color: "var(--text)", fontSize: 12, cursor: page >= totalPages ? "not-allowed" : "pointer" }}>
               Next →
             </button>
           </div>

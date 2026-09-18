@@ -40,7 +40,7 @@ const TARGETS: Record<string, string[]> = {
 
 const EXTRA_STYLES = `
   @keyframes slideIn { from{opacity:0;transform:translateX(18px)} to{opacity:1;transform:translateX(0)} }
-  .grade-btn { border: 1.5px solid rgba(0,0,0,0.09); background: #f9fafb; color: ${C.muted}; border-radius: 10px; padding: 9px 6px; cursor: pointer; font-size: 13px; font-weight: 600; font-family: inherit; transition: all 0.15s; text-align: center; }
+  .grade-btn { border: 1.5px solid ${C.border}; background: var(--input-bg); color: ${C.muted}; border-radius: 10px; padding: 9px 6px; cursor: pointer; font-size: 13px; font-weight: 600; font-family: inherit; transition: all 0.15s; text-align: center; }
   .grade-btn:hover { border-color: rgba(79,124,255,0.4); color: ${C.text}; background: rgba(79,124,255,0.06); }
   .grade-btn.selected { border-color: ${C.primary}; background: rgba(79,124,255,0.10); color: ${C.primary}; box-shadow: 0 0 0 1px rgba(79,124,255,0.25); }
   .next-btn { width:100%; padding:13px; border-radius:10px; border:none; background:linear-gradient(135deg, ${C.primary}, ${C.primaryDeep}); color:#fff; font-size:15px; font-weight:700; font-family:inherit; cursor:pointer; transition:all 0.25s cubic-bezier(0.16,1,0.3,1); box-shadow:0 4px 18px rgba(79,124,255,0.28), inset 0 1px 0 rgba(255,255,255,0.25); }
@@ -138,8 +138,8 @@ function SignupForm() {
   const inputStyle: React.CSSProperties = {
     width: "100%",
     padding: "12px 14px",
-    background: "#f9fafb",
-    border: `1px solid rgba(0,0,0,0.10)`,
+    background: "var(--input-bg)",
+    border: `1px solid ${C.border}`,
     borderRadius: 10,
     color: C.text,
     fontSize: 14,
@@ -445,7 +445,7 @@ function SignupForm() {
 
 export default function SignupPage() {
   return (
-    <Suspense fallback={<div style={{ minHeight: "100vh", background: "#f4f6fb" }} />}>
+    <Suspense fallback={<div style={{ minHeight: "100vh", background: "var(--bg)" }} />}>
       <SignupForm />
     </Suspense>
   );

@@ -105,7 +105,7 @@ function MasteryRow({ s }: { s: SubjectMastery }) {
 
 // ─── Recent event row ─────────────────────────────────────────────────────────
 function EventRow({ ev }: { ev: RecentEvent }) {
-  const meta = EVENT_META[ev.type] ?? { icon: "•", color: "#94a3b8", label: ev.type };
+  const meta = EVENT_META[ev.type] ?? { icon: "•", color: "var(--muted)", label: ev.type };
   return (
     <div className="pr-event-row">
       <div className="pr-event-icon" style={{ background: `${meta.color}18`, color: meta.color }}>
@@ -170,10 +170,10 @@ export default function ProgressPage() {
 
         .pr-page {
           font-family: 'Outfit', sans-serif;
-          color: #1a1f2e;
+          color: var(--text);
           min-height: 100%;
           padding: 32px 36px 56px;
-          background: #f5f7ff;
+          background: var(--bg);
           max-width: 1100px;
         }
 
@@ -187,14 +187,14 @@ export default function ProgressPage() {
         }
         .pr-page-title {
           font-family: 'DM Serif Display', serif;
-          font-size: 30px; margin: 0 0 4px; color: #1a1f2e;
+          font-size: 30px; margin: 0 0 4px; color: var(--text);
         }
-        .pr-page-sub { font-size: 14px; color: #64748b; margin: 0; }
+        .pr-page-sub { font-size: 14px; color: var(--muted); margin: 0; }
 
         /* Range toggle */
         .pr-range-toggle {
           display: flex; gap: 4px;
-          background: #fff; padding: 4px;
+          background: var(--card); padding: 4px;
           border-radius: 10px;
           box-shadow: 0 2px 8px rgba(0,0,0,0.06);
         }
@@ -203,7 +203,7 @@ export default function ProgressPage() {
           border: none; font-size: 13px; font-weight: 600;
           font-family: 'Outfit', sans-serif;
           cursor: pointer; transition: background 0.18s, color 0.18s;
-          color: #64748b; background: transparent;
+          color: var(--muted); background: transparent;
         }
         .pr-range-btn.active { background: #6366f1; color: #fff; }
 
@@ -216,7 +216,7 @@ export default function ProgressPage() {
         }
         @media (max-width: 700px) { .pr-summary { grid-template-columns: 1fr; } }
         .pr-sum-card {
-          background: #fff; border-radius: 14px;
+          background: var(--card); border-radius: 14px;
           padding: 20px 18px;
           box-shadow: 0 2px 10px rgba(0,0,0,0.05);
           border-top: 3px solid var(--ac);
@@ -227,9 +227,9 @@ export default function ProgressPage() {
           font-size: 22px; margin-bottom: 10px;
         }
         .pr-sum-value {
-          font-size: 28px; font-weight: 800; color: #1a1f2e; margin-bottom: 3px;
+          font-size: 28px; font-weight: 800; color: var(--text); margin-bottom: 3px;
         }
-        .pr-sum-label { font-size: 12.5px; color: #94a3b8; font-weight: 500; }
+        .pr-sum-label { font-size: 12.5px; color: var(--muted); font-weight: 500; }
 
         /* ── Two column layout ── */
         .pr-cols {
@@ -242,20 +242,20 @@ export default function ProgressPage() {
 
         /* Card */
         .pr-card {
-          background: #fff; border-radius: 16px;
+          background: var(--card); border-radius: 16px;
           box-shadow: 0 2px 12px rgba(0,0,0,0.05);
           overflow: hidden;
         }
         .pr-card-head {
           padding: 16px 20px 14px;
-          border-bottom: 1px solid #f1f5f9;
+          border-bottom: 1px solid var(--card-hover);
         }
-        .pr-card-title { font-size: 15px; font-weight: 700; color: #1a1f2e; margin: 0; }
+        .pr-card-title { font-size: 15px; font-weight: 700; color: var(--text); margin: 0; }
         .pr-card-body  { padding: 18px 20px; }
 
         /* Bar chart */
         .pr-chart-wrap {}
-        .pr-chart-label { font-size: 12px; color: #94a3b8; margin-bottom: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+        .pr-chart-label { font-size: 12px; color: var(--muted); margin-bottom: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
         .pr-bars {
           display: flex; align-items: flex-end;
           gap: 6px; height: 120px;
@@ -267,27 +267,27 @@ export default function ProgressPage() {
         }
         .pr-bar-bg {
           flex: 1; width: 100%;
-          background: #f1f5f9; border-radius: 4px;
+          background: var(--card-hover); border-radius: 4px;
           display: flex; flex-direction: column-reverse;
           overflow: hidden;
         }
         .pr-bar-fill { width: 100%; border-radius: 4px; transition: height 0.7s cubic-bezier(.4,0,.2,1); }
-        .pr-bar-date { font-size: 9.5px; color: #94a3b8; font-weight: 600; }
+        .pr-bar-date { font-size: 9.5px; color: var(--muted); font-weight: 600; }
 
         /* Mastery rows */
         .pr-mastery-list { display: flex; flex-direction: column; gap: 14px; }
         .pr-mastery-row { display: flex; align-items: center; gap: 14px; }
         .pr-mastery-left { min-width: 0; flex: 1; }
-        .pr-mastery-name { font-size: 13.5px; font-weight: 700; color: #1a1f2e; display: block; }
-        .pr-mastery-count { font-size: 11.5px; color: #94a3b8; }
+        .pr-mastery-name { font-size: 13.5px; font-weight: 700; color: var(--text); display: block; }
+        .pr-mastery-count { font-size: 11.5px; color: var(--muted); }
         .pr-mastery-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
-        .pr-mastery-bar-bg { width: 110px; height: 6px; border-radius: 3px; background: #f1f5f9; }
+        .pr-mastery-bar-bg { width: 110px; height: 6px; border-radius: 3px; background: var(--card-hover); }
         .pr-mastery-bar-fill { height: 100%; border-radius: 3px; transition: width 0.7s ease; }
-        .pr-mastery-pct { font-size: 12px; font-weight: 700; color: #1a1f2e; min-width: 34px; text-align: right; }
+        .pr-mastery-pct { font-size: 12px; font-weight: 700; color: var(--text); min-width: 34px; text-align: right; }
 
         /* Recent events */
         .pr-events-card {
-          background: #fff; border-radius: 16px;
+          background: var(--card); border-radius: 16px;
           box-shadow: 0 2px 12px rgba(0,0,0,0.05);
           overflow: hidden;
           animation: fadeUp 0.45s ease both 180ms;
@@ -295,32 +295,32 @@ export default function ProgressPage() {
         .pr-event-row {
           display: flex; align-items: center;
           padding: 12px 20px; gap: 14px;
-          border-bottom: 1px solid #f8fafc;
+          border-bottom: 1px solid var(--bg);
           transition: background 0.15s;
         }
         .pr-event-row:last-child { border-bottom: none; }
-        .pr-event-row:hover { background: #fafbff; }
+        .pr-event-row:hover { background: var(--card-hover); }
         .pr-event-icon {
           width: 34px; height: 34px; border-radius: 9px;
           display: flex; align-items: center; justify-content: center;
           font-size: 15px; flex-shrink: 0;
         }
         .pr-event-info { flex: 1; min-width: 0; }
-        .pr-event-topic { font-size: 13.5px; font-weight: 600; color: #1a1f2e; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .pr-event-meta  { font-size: 12px; color: #94a3b8; margin-top: 1px; }
+        .pr-event-topic { font-size: 13.5px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .pr-event-meta  { font-size: 12px; color: var(--muted); margin-top: 1px; }
         .pr-event-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
         .pr-event-badge { font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 20px; }
         .pr-event-score { font-size: 13px; font-weight: 800; color: #10b981; }
 
         /* Skeleton / error / empty */
         .pr-skeleton {
-          background: linear-gradient(90deg,#f1f5f9 25%,#e2e8f0 50%,#f1f5f9 75%);
+          background: linear-gradient(90deg,var(--card-hover) 25%,var(--border) 50%,var(--card-hover) 75%);
           background-size: 200% 100%;
           animation: shimmer 1.4s infinite;
           border-radius: 12px;
         }
         .pr-error { padding: 14px 18px; border-radius: 12px; background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; font-size: 14px; margin-bottom: 24px; }
-        .pr-empty { text-align: center; padding: 40px 24px; color: #94a3b8; font-size: 14px; }
+        .pr-empty { text-align: center; padding: 40px 24px; color: var(--muted); font-size: 14px; }
 
         @keyframes fadeUp {
           from { opacity:0; transform:translateY(12px); }
@@ -414,7 +414,7 @@ export default function ProgressPage() {
 
         {/* Recent events */}
         <div className="pr-events-card">
-          <div className="pr-card-head" style={{ padding: "16px 20px 14px", borderBottom: "1px solid #f1f5f9" }}>
+          <div className="pr-card-head" style={{ padding: "16px 20px 14px", borderBottom: "1px solid var(--card-hover)" }}>
             <h3 className="pr-card-title">Recent Activity</h3>
           </div>
           {loading ? (

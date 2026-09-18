@@ -8,8 +8,8 @@ export default function TermsPage() {
     <div
       style={{
         fontFamily: "'Sora','Segoe UI',sans-serif",
-        background: "#f4f6fb",
-        color: "#111827",
+        background: "var(--bg)",
+        color: "var(--text)",
         minHeight: "100vh",
         padding: "80px 20px",
       }}
@@ -18,10 +18,10 @@ export default function TermsPage() {
         style={{
           maxWidth: 900,
           margin: "0 auto",
-          background: "#ffffff",
+          background: "var(--card)",
           borderRadius: 16,
           padding: "40px 32px",
-          border: "1px solid rgba(0,0,0,0.08)",
+          border: "1px solid var(--border)",
         }}
       >
         <Link href="/" style={{ fontSize: 14, color: "#4f7cff" }}>
@@ -38,7 +38,7 @@ export default function TermsPage() {
           Terms of Service
         </h1>
 
-        <p style={{ fontSize: 14, color: "#6b7280" }}>
+        <p style={{ fontSize: 14, color: "var(--muted)" }}>
           Last Updated: April 2026
         </p>
 
@@ -112,7 +112,7 @@ function Section({
       <p
         style={{
           fontSize: 14,
-          color: "#374151",
+          color: "var(--text)",
           lineHeight: 1.7,
         }}
       >

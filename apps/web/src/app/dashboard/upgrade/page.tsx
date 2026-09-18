@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { C } from "../client-layout";
+import { C } from "@/app/lib/theme";
 import { getApiUrl } from "@/app/lib/api";
 import { getAuthHeaders, parseJsonResponse } from "@/app/lib/auth-client";
 import { Loader2, Check, AlertCircle } from "lucide-react";
@@ -225,7 +225,7 @@ export default function UpgradePage() {
                     fontSize:   10,
                     fontWeight: 700,
                     color:      C.muted,
-                    background: "#f1f5f9",
+                    background: "var(--card-hover)",
                     padding:    "4px 8px",
                     borderRadius: 6,
                   }}
@@ -261,7 +261,7 @@ export default function UpgradePage() {
                   fontWeight:   700,
                   cursor:       isCurrent || isPremium ? "not-allowed" : "pointer",
                   background:   isCurrent
-                    ? "#f1f5f9"
+                    ? "var(--card-hover)"
                     : planKey === "free"
                     ? "rgba(79,124,255,0.1)"
                     : C.primary,
@@ -304,7 +304,7 @@ export default function UpgradePage() {
         >
           <div
             style={{
-              background:     "#fff",
+              background:     "var(--card)",
               padding:        32,
               borderRadius:   28,
               width:          "100%",
@@ -332,7 +332,7 @@ export default function UpgradePage() {
             </div>
 
             <div>
-              <h3 style={{ fontSize: 22, fontWeight: 700, color: "#1a1a1a", marginBottom: 8 }}>
+              <h3 style={{ fontSize: 22, fontWeight: 700, color: "var(--text)", marginBottom: 8 }}>
                 Switch to Free Plan?
               </h3>
               <p style={{ fontSize: 14, color: C.muted, lineHeight: 1.6 }}>

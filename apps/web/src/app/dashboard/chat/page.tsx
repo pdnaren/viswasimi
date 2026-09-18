@@ -550,7 +550,7 @@ function ChatContent() {
                 <span className="vw-sec-label">Today&apos;s Plan</span>
                 {planItems.length === 0
                   ? (
-                    <div style={{ fontSize: 12, color: "#64748b", padding: "12px", background: "#f8fafc", borderRadius: 10, border: "1px dashed #cbd5e1", textAlign: "center" }}>
+                    <div style={{ fontSize: 12, color: "var(--muted)", padding: "12px", background: "var(--card-hover)", borderRadius: 10, border: "1px dashed var(--border-hover)", textAlign: "center" }}>
                       Nothing scheduled.
                     </div>
                   ) : (
@@ -857,7 +857,7 @@ function ChatContent() {
 export default function ChatPage() {
   return (
     <Suspense fallback={
-      <div style={{ padding: "4rem", textAlign: "center", color: "#64748b", fontFamily: "sans-serif" }}>
+      <div style={{ padding: "4rem", textAlign: "center", color: "var(--muted)", fontFamily: "sans-serif" }}>
         Loading…
       </div>
     }>

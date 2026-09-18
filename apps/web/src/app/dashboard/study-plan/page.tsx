@@ -138,7 +138,7 @@ export default function StudyPlanPage() {
     return (
       <div style={{ minHeight: "80vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <div className="sp-spinner"></div>
-        <style>{`.sp-spinner { width: 40px; height: 40px; border: 3px solid #e2e8f0; border-top-color: #4f7cff; border-radius: 50%; animation: spin 1s linear infinite; } @keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        <style>{`.sp-spinner { width: 40px; height: 40px; border: 3px solid var(--border); border-top-color: #4f7cff; border-radius: 50%; animation: spin 1s linear infinite; } @keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     );
   }
@@ -151,7 +151,7 @@ export default function StudyPlanPage() {
         .sp-page {
           font-family: 'Outfit', sans-serif;
           padding: 40px;
-          color: #1a1f2e;
+          color: var(--text);
           max-width: 900px;
           margin: 0 auto;
         }
@@ -165,16 +165,16 @@ export default function StudyPlanPage() {
           flex-wrap: wrap; 
           gap: 24px; 
           animation: fadeUp 0.4s ease both; 
-          background: #fff;
+          background: var(--card);
           padding: 24px 32px;
           border-radius: 20px;
-          border: 1px solid #e2e8f0;
+          border: 1px solid var(--border);
           box-shadow: 0 4px 20px rgba(0,0,0,0.02);
         }
         .sp-title-wrap { display: flex; flex-direction: column; gap: 8px; }
         .sp-subtitle { display: flex; align-items: center; gap: 8px; font-weight: 700; color: #4f7cff; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; }
-        .sp-title { font-family: 'DM Serif Display', serif; font-size: 36px; margin: 0; line-height: 1.1; color: #0f172a; }
-        .sp-desc { color: #64748b; font-size: 16px; margin: 0; font-weight: 500; }
+        .sp-title { font-family: 'DM Serif Display', serif; font-size: 36px; margin: 0; line-height: 1.1; color: var(--text); }
+        .sp-desc { color: var(--muted); font-size: 16px; margin: 0; font-weight: 500; }
         .sp-progress-text { color: #10b981; font-weight: 700; }
 
         .sp-error { display: flex; align-items: center; gap: 12px; background: #fef2f2; color: #ef4444; padding: 16px; border-radius: 12px; border: 1px solid #fecaca; margin-bottom: 32px; font-weight: 500; }
@@ -187,47 +187,47 @@ export default function StudyPlanPage() {
         }
         .sp-btn-primary:hover { background: #3b5bdb; transform: translateY(-2px); box-shadow: 0 6px 16px rgba(79,124,255,0.3); }
         
-        .sp-btn-secondary { background: #fff; color: #475569; border: 1px solid #cbd5e1; padding: 12px 24px; border-radius: 12px; font-weight: 600; font-size: 15px; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: 0.2s; font-family: 'Outfit', sans-serif; }
-        .sp-btn-secondary:hover { background: #f8fafc; color: #10b981; border-color: #a7f3d0; }
+        .sp-btn-secondary { background: var(--card); color: var(--muted); border: 1px solid var(--border-hover); padding: 12px 24px; border-radius: 12px; font-weight: 600; font-size: 15px; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: 0.2s; font-family: 'Outfit', sans-serif; }
+        .sp-btn-secondary:hover { background: var(--bg); color: #10b981; border-color: #a7f3d0; }
 
-        .sp-btn-remove { background: none; border: none; color: #94a3b8; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 6px; border-radius: 8px; transition: 0.2s; }
+        .sp-btn-remove { background: none; border: none; color: var(--muted); cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 6px; border-radius: 8px; transition: 0.2s; }
         .sp-btn-remove:hover { background: #fee2e2; color: #ef4444; }
 
         /* ── Timeline ── */
-        .sp-timeline { position: relative; padding-left: 40px; margin-left: 120px; border-left: 2px solid #e2e8f0; display: flex; flex-direction: column; gap: 32px; }
+        .sp-timeline { position: relative; padding-left: 40px; margin-left: 120px; border-left: 2px solid var(--border); display: flex; flex-direction: column; gap: 32px; }
         .sp-item { position: relative; animation: fadeUp 0.4s ease both; }
         .sp-item:nth-child(2) { animation-delay: 0.1s; }
         .sp-item:nth-child(3) { animation-delay: 0.2s; }
 
-        .sp-dot { position: absolute; left: -51px; top: 24px; width: 20px; height: 20px; border-radius: 50%; border: 4px solid #f8fafc; display: flex; align-items: center; justify-content: center; z-index: 2; }
+        .sp-dot { position: absolute; left: -51px; top: 24px; width: 20px; height: 20px; border-radius: 50%; border: 4px solid var(--bg); display: flex; align-items: center; justify-content: center; z-index: 2; }
         .sp-dot-inner { width: 8px; height: 8px; border-radius: 50%; }
 
         /* Time labels */
         .sp-time-label { position: absolute; left: -140px; top: 18px; width: 80px; text-align: right; }
-        .sp-time-main { display: block; font-weight: 700; font-size: 15px; color: #1e293b; }
-        .sp-time-dur { display: block; font-weight: 500; font-size: 13px; color: #94a3b8; margin-top: 2px; }
+        .sp-time-main { display: block; font-weight: 700; font-size: 15px; color: var(--text); }
+        .sp-time-dur { display: block; font-weight: 500; font-size: 13px; color: var(--muted); margin-top: 2px; }
 
         /* ── Cards ── */
-        .sp-card { background: #fff; border-radius: 20px; padding: 28px; box-shadow: 0 4px 16px rgba(0,0,0,0.04); border: 1px solid #e2e8f0; transition: transform 0.2s, box-shadow 0.2s; }
-        .sp-card:hover { transform: translateY(-3px); box-shadow: 0 12px 32px rgba(0,0,0,0.08); border-color: #cbd5e1; }
+        .sp-card { background: var(--card); border-radius: 20px; padding: 28px; box-shadow: 0 4px 16px rgba(0,0,0,0.04); border: 1px solid var(--border); transition: transform 0.2s, box-shadow 0.2s; }
+        .sp-card:hover { transform: translateY(-3px); box-shadow: 0 12px 32px rgba(0,0,0,0.08); border-color: var(--border-hover); }
         
         .sp-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
         .sp-badges { display: flex; align-items: center; gap: 12px; }
         .sp-badge { font-size: 13px; font-weight: 700; padding: 6px 16px; border-radius: 99px; border: 1px solid transparent; letter-spacing: 0.3px; text-transform: uppercase;}
-        .sp-target { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: #64748b; background: #f1f5f9; padding: 6px 16px; border-radius: 99px; }
+        .sp-target { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: var(--muted); background: var(--card-hover); padding: 6px 16px; border-radius: 99px; }
         
-        .sp-topic-name { font-size: 26px; font-weight: 800; margin: 0 0 8px; color: #0f172a; letter-spacing: -0.5px;}
-        .sp-topic-meta { font-size: 16px; color: #64748b; font-weight: 500; margin: 0 0 28px; }
+        .sp-topic-name { font-size: 26px; font-weight: 800; margin: 0 0 8px; color: var(--text); letter-spacing: -0.5px;}
+        .sp-topic-meta { font-size: 16px; color: var(--muted); font-weight: 500; margin: 0 0 28px; }
 
         /* ── Actions ── */
-        .sp-actions { display: flex; gap: 16px; border-top: 1px solid #f1f5f9; padding-top: 24px; flex-wrap: wrap; }
+        .sp-actions { display: flex; gap: 16px; border-top: 1px solid var(--card-hover); padding-top: 24px; flex-wrap: wrap; }
         .sp-done-msg { display: flex; align-items: center; gap: 10px; color: #10b981; background: #ecfdf5; border: 1px solid #d1fae5; padding: 14px 24px; border-radius: 14px; font-weight: 700; font-size: 16px; width: 100%; justify-content: center; }
 
         /* ── Empty State ── */
-        .sp-empty { text-align: center; padding: 80px 20px; background: #fff; border-radius: 24px; border: 2px dashed #cbd5e1; animation: fadeUp 0.4s ease both; display: flex; flex-direction: column; align-items: center; box-shadow: 0 4px 20px rgba(0,0,0,0.02);}
-        .sp-empty-icon { width: 80px; height: 80px; background: #f1f5f9; color: #4f7cff; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px; }
-        .sp-empty h3 { font-size: 24px; color: #0f172a; margin: 0 0 12px; font-weight: 800; font-family: 'DM Serif Display', serif;}
-        .sp-empty p { color: #64748b; margin: 0 0 32px; font-size: 16px; max-width: 400px; line-height: 1.5; }
+        .sp-empty { text-align: center; padding: 80px 20px; background: var(--card); border-radius: 24px; border: 2px dashed var(--border-hover); animation: fadeUp 0.4s ease both; display: flex; flex-direction: column; align-items: center; box-shadow: 0 4px 20px rgba(0,0,0,0.02);}
+        .sp-empty-icon { width: 80px; height: 80px; background: var(--card-hover); color: #4f7cff; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px; }
+        .sp-empty h3 { font-size: 24px; color: var(--text); margin: 0 0 12px; font-weight: 800; font-family: 'DM Serif Display', serif;}
+        .sp-empty p { color: var(--muted); margin: 0 0 32px; font-size: 16px; max-width: 400px; line-height: 1.5; }
 
         /* ── Status Colors ── */
         .st-sched { background: #eff6ff; color: #2563eb; border-color: #bfdbfe; }
@@ -245,7 +245,7 @@ export default function StudyPlanPage() {
           .sp-timeline { padding-left: 24px; margin-left: 12px; }
           .sp-dot { left: -35px; }
           .sp-time-label { display: none; }
-          .sp-mobile-time { display: flex; align-items: center; gap: 6px; font-weight: 700; color: #1e293b; background: #f1f5f9; padding: 6px 14px; border-radius: 8px; font-size: 13px; margin-right: 8px; }
+          .sp-mobile-time { display: flex; align-items: center; gap: 6px; font-weight: 700; color: var(--text); background: var(--card-hover); padding: 6px 14px; border-radius: 8px; font-size: 13px; margin-right: 8px; }
           .sp-btn-primary { width: 100%; justify-content: center; }
         }
       `}</style>

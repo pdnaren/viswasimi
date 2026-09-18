@@ -51,8 +51,8 @@ function LoginForm() {
   const inputStyle: React.CSSProperties = {
     width: "100%",
     padding: "12px 14px",
-    background: "#f9fafb",
-    border: `1px solid rgba(0,0,0,0.10)`,
+    background: "var(--input-bg)",
+    border: `1px solid ${C.border}`,
     borderRadius: 10,
     color: C.text,
     fontSize: 14,
@@ -204,7 +204,7 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div style={{ minHeight: "100vh", background: "#f4f6fb" }} />}>
+    <Suspense fallback={<div style={{ minHeight: "100vh", background: "var(--bg)" }} />}>
       <LoginForm />
     </Suspense>
   );

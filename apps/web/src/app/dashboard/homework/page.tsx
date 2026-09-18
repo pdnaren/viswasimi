@@ -60,20 +60,20 @@ export default function HomeworkPage() {
   }
 
   return (
-    <div style={{ fontFamily: "'Outfit', sans-serif", background: "#f8fafc", minHeight: "100vh", padding: 40 }}>
+    <div style={{ fontFamily: "'Outfit', sans-serif", background: "var(--bg)", minHeight: "100vh", padding: 40 }}>
       <header style={{ marginBottom: 28 }}>
-        <h1 style={{ fontFamily: "'DM Serif Display', serif", fontSize: 32, color: "#0f172a", marginBottom: 8 }}>Homework Help</h1>
-        <p style={{ color: "#64748b", fontSize: 15 }}>Upload a photo of a question you&apos;re stuck on, and choose how much help you want.</p>
+        <h1 style={{ fontFamily: "'DM Serif Display', serif", fontSize: 32, color: "var(--text)", marginBottom: 8 }}>Homework Help</h1>
+        <p style={{ color: "var(--muted)", fontSize: 15 }}>Upload a photo of a question you&apos;re stuck on, and choose how much help you want.</p>
       </header>
 
       <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
-        <form onSubmit={handleSubmit} style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 16, padding: 24, flex: "1 1 360px", maxWidth: 460 }}>
+        <form onSubmit={handleSubmit} style={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 16, padding: 24, flex: "1 1 360px", maxWidth: 460 }}>
           <label
             htmlFor="homework-upload"
             style={{
               display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-              border: "2px dashed #cbd5e1", borderRadius: 14, padding: preview ? 12 : 36,
-              cursor: "pointer", marginBottom: 18, background: "#f8fafc", textAlign: "center",
+              border: "2px dashed var(--border-hover)", borderRadius: 14, padding: preview ? 12 : 36,
+              cursor: "pointer", marginBottom: 18, background: "var(--bg)", textAlign: "center",
             }}
           >
             <input id="homework-upload" type="file" accept="image/png,image/jpeg,image/webp" onChange={handleFileChange} style={{ display: "none" }} />
@@ -83,13 +83,13 @@ export default function HomeworkPage() {
             ) : (
               <>
                 <div style={{ fontSize: 32, marginBottom: 8 }}>📷</div>
-                <div style={{ fontWeight: 700, fontSize: 14, color: "#1e293b" }}>Click to upload a photo</div>
-                <div style={{ fontSize: 12, color: "#94a3b8", marginTop: 4 }}>PNG, JPEG, or WEBP</div>
+                <div style={{ fontWeight: 700, fontSize: 14, color: "var(--text)" }}>Click to upload a photo</div>
+                <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 4 }}>PNG, JPEG, or WEBP</div>
               </>
             )}
           </label>
 
-          <label style={{ fontSize: 13, fontWeight: 600, color: "#1e293b", display: "block", marginBottom: 6 }}>
+          <label style={{ fontSize: 13, fontWeight: 600, color: "var(--text)", display: "block", marginBottom: 6 }}>
             Anything specific to add? (optional)
           </label>
           <textarea
@@ -97,10 +97,10 @@ export default function HomeworkPage() {
             onChange={e => setQuestion(e.target.value)}
             placeholder="e.g. I don't understand part (b)"
             rows={2}
-            style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: "1px solid #e2e8f0", fontSize: 13, fontFamily: "inherit", marginBottom: 18, resize: "vertical" }}
+            style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: "1px solid var(--border)", fontSize: 13, fontFamily: "inherit", marginBottom: 18, resize: "vertical" }}
           />
 
-          <label style={{ fontSize: 13, fontWeight: 600, color: "#1e293b", display: "block", marginBottom: 8 }}>
+          <label style={{ fontSize: 13, fontWeight: 600, color: "var(--text)", display: "block", marginBottom: 8 }}>
             How much help do you want?
           </label>
           <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 20 }}>
@@ -111,12 +111,12 @@ export default function HomeworkPage() {
                 onClick={() => setLevel(l.value)}
                 style={{
                   textAlign: "left", padding: "10px 14px", borderRadius: 10, cursor: "pointer",
-                  border: `1.5px solid ${level === l.value ? "#6366f1" : "#e2e8f0"}`,
-                  background: level === l.value ? "#eef2ff" : "#fff",
+                  border: `1.5px solid ${level === l.value ? "#6366f1" : "var(--border)"}`,
+                  background: level === l.value ? "rgba(99,102,241,0.12)" : "var(--card)",
                 }}
               >
-                <div style={{ fontSize: 13, fontWeight: 700, color: "#1e293b" }}>{l.label}</div>
-                <div style={{ fontSize: 12, color: "#64748b" }}>{l.description}</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text)" }}>{l.label}</div>
+                <div style={{ fontSize: 12, color: "var(--muted)" }}>{l.description}</div>
               </button>
             ))}
           </div>
@@ -137,14 +137,14 @@ export default function HomeworkPage() {
         </form>
 
         {(loading || answer) && (
-          <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 16, padding: 24, flex: "2 1 420px", minHeight: 200 }}>
-            <h2 style={{ fontSize: 15, fontWeight: 700, color: "#1e293b", marginBottom: 14 }}>
+          <div style={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 16, padding: 24, flex: "2 1 420px", minHeight: 200 }}>
+            <h2 style={{ fontSize: 15, fontWeight: 700, color: "var(--text)", marginBottom: 14 }}>
               {loading ? "Thinking…" : "Here's some help"}
             </h2>
             {loading ? (
-              <p style={{ color: "#94a3b8", fontSize: 14 }}>Analyzing your question…</p>
+              <p style={{ color: "var(--muted)", fontSize: 14 }}>Analyzing your question…</p>
             ) : (
-              <div style={{ fontSize: 14, color: "#334155", lineHeight: 1.7 }}>
+              <div style={{ fontSize: 14, color: "var(--text)", lineHeight: 1.7 }}>
                 <MarkdownRenderer content={answer || ""} />
               </div>
             )}

@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { getApiUrl } from "@/app/lib/api";
 import { getApiErrorMessage, getAuthHeaders, parseJsonResponse } from "@/app/lib/auth-client";
-import { C } from "../client-layout";
+import { C } from "@/app/lib/theme";
 
 type ProfileResponse = { 
   user: { name: string; email: string; grade: number; role: string; locale: string; timezone: string; createdAt?: string | null }; 
@@ -110,7 +110,7 @@ export default function ProfilePage() {
                 value={data?.user.locale || "en-IN"} 
                 onChange={handleLocaleChange}
                 disabled={updatingLocale}
-                style={{ padding: "6px 10px", borderRadius: 8, border: "1px solid #d1d5db", outline: "none", cursor: "pointer", background: "#f9fafb" }}
+                style={{ padding: "6px 10px", borderRadius: 8, border: "1px solid #d1d5db", outline: "none", cursor: "pointer", background: "var(--input-bg)" }}
               >
                 <option value="en-IN">English</option>
                 <option value="hi-IN">Hindi (हिंदी)</option>
@@ -178,4 +178,4 @@ function ChangePasswordModal({ onClose }: { onClose: () => void }) {
 
 const inputStyle: React.CSSProperties = { width: "100%", padding: "10px 12px", borderRadius: 10, border: "1px solid rgba(0,0,0,0.12)" };
 const buttonStyle: React.CSSProperties = { padding: "10px 14px", borderRadius: 10, border: "1px solid rgba(0,0,0,0.12)", background: "white", cursor: "pointer" };
-const actionButtonStyle: React.CSSProperties = { padding: "10px 14px", borderRadius: 10, border: `1px solid ${C.border}`, background: "#f9fafb", cursor: "pointer", fontWeight: 500, transition: "0.2s" };
+const actionButtonStyle: React.CSSProperties = { padding: "10px 14px", borderRadius: 10, border: `1px solid ${C.border}`, background: "var(--input-bg)", cursor: "pointer", fontWeight: 500, transition: "0.2s" };

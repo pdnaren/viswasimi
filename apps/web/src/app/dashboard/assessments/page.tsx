@@ -149,12 +149,12 @@ function AssessmentsContent() {
   );
 
   return (
-    <div style={{ fontFamily: "'Outfit', sans-serif", background: "#f8fafc", minHeight: "100vh", padding: 40 }}>
+    <div style={{ fontFamily: "'Outfit', sans-serif", background: "var(--bg)", minHeight: "100vh", padding: 40 }}>
       <header style={{ marginBottom: 32 }}>
-        <h1 style={{ fontFamily: "'DM Serif Display', serif", fontSize: 36, color: "#0f172a", marginBottom: 8 }}>
+        <h1 style={{ fontFamily: "'DM Serif Display', serif", fontSize: 36, color: "var(--text)", marginBottom: 8 }}>
           Quizzes
         </h1>
-        <p style={{ color: "#64748b", fontSize: 16 }}>Test what you&apos;ve learned and see your weak areas.</p>
+        <p style={{ color: "var(--muted)", fontSize: 16 }}>Test what you&apos;ve learned and see your weak areas.</p>
       </header>
 
       {error && stage !== "error" && (
@@ -164,11 +164,11 @@ function AssessmentsContent() {
       )}
 
       {stage === "picker" && (
-        <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 16, padding: 24 }}>
+        <div style={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 16, padding: 24 }}>
           {!pickerLoading && subjects.length > 0 && (
-            <div style={{ marginBottom: 24, paddingBottom: 20, borderBottom: "1px solid #f1f5f9" }}>
-              <h2 style={{ fontSize: 18, fontWeight: 700, color: "#1e293b", marginBottom: 4 }}>Diagnostic test</h2>
-              <p style={{ fontSize: 13, color: "#64748b", marginBottom: 12 }}>
+            <div style={{ marginBottom: 24, paddingBottom: 20, borderBottom: "1px solid var(--card-hover)" }}>
+              <h2 style={{ fontSize: 18, fontWeight: 700, color: "var(--text)", marginBottom: 4 }}>Diagnostic test</h2>
+              <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 12 }}>
                 New to a subject? Take a short baseline test to find your starting level.
               </p>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
@@ -185,11 +185,11 @@ function AssessmentsContent() {
             </div>
           )}
 
-          <h2 style={{ fontSize: 18, fontWeight: 700, color: "#1e293b", marginBottom: 16 }}>Pick a topic to quiz yourself on</h2>
+          <h2 style={{ fontSize: 18, fontWeight: 700, color: "var(--text)", marginBottom: 16 }}>Pick a topic to quiz yourself on</h2>
           {pickerLoading ? (
-            <p style={{ color: "#94a3b8" }}>Loading your curriculum…</p>
+            <p style={{ color: "var(--muted)" }}>Loading your curriculum…</p>
           ) : activeSubjectTopics.length === 0 ? (
-            <p style={{ color: "#94a3b8" }}>No curriculum found yet. Visit the Curriculum page first.</p>
+            <p style={{ color: "var(--muted)" }}>No curriculum found yet. Visit the Curriculum page first.</p>
           ) : (
             activeSubjectTopics.map(({ subject, chapter }) => (
               <div key={chapter.id} style={{ marginBottom: 20 }}>
@@ -209,7 +209,7 @@ function AssessmentsContent() {
                     <button
                       key={topic.id}
                       onClick={() => router.push(`/dashboard/assessments?topicId=${topic.id}&label=${encodeURIComponent(topic.name)}`)}
-                      style={{ padding: "8px 14px", borderRadius: 8, border: "1px solid #e2e8f0", background: "#f8fafc", color: "#334155", fontSize: 13, fontWeight: 600, cursor: "pointer" }}
+                      style={{ padding: "8px 14px", borderRadius: 8, border: "1px solid var(--border)", background: "var(--bg)", color: "var(--text)", fontSize: 13, fontWeight: 600, cursor: "pointer" }}
                     >
                       {topic.name}
                     </button>
@@ -222,10 +222,10 @@ function AssessmentsContent() {
       )}
 
       {(stage === "ready" || stage === "starting") && (
-        <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 16, padding: 32, textAlign: "center" }}>
+        <div style={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 16, padding: 32, textAlign: "center" }}>
           <div style={{ fontSize: 32, marginBottom: 12 }}>📝</div>
-          <h2 style={{ fontSize: 20, fontWeight: 700, color: "#1e293b", marginBottom: 6 }}>{label || "Quiz"}</h2>
-          <p style={{ color: "#64748b", fontSize: 14, marginBottom: 24 }}>
+          <h2 style={{ fontSize: 20, fontWeight: 700, color: "var(--text)", marginBottom: 6 }}>{label || "Quiz"}</h2>
+          <p style={{ color: "var(--muted)", fontSize: 14, marginBottom: 24 }}>
             {subjectId
               ? "A short baseline test across this subject's chapters, to gauge your starting level."
               : chapterId ? "A mixed quiz covering this chapter's topics." : "A short quiz on this topic."}
@@ -241,7 +241,7 @@ function AssessmentsContent() {
       )}
 
       {stage === "error" && (
-        <div style={{ background: "#fff", border: "1px solid #fecaca", borderRadius: 16, padding: 32, textAlign: "center" }}>
+        <div style={{ background: "var(--card)", border: "1px solid #fecaca", borderRadius: 16, padding: 32, textAlign: "center" }}>
           <div style={{ fontSize: 32, marginBottom: 12 }}>⚠️</div>
           <p style={{ color: "#dc2626", fontSize: 14, marginBottom: 20 }}>{error}</p>
           <Link href="/dashboard/curriculum" style={{ color: "#6366f1", fontWeight: 700, fontSize: 14, textDecoration: "none" }}>
@@ -251,24 +251,24 @@ function AssessmentsContent() {
       )}
 
       {stage === "in_progress" && questions[index] && (
-        <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 16, padding: 28, maxWidth: 640 }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: "#94a3b8", marginBottom: 10 }}>
+        <div style={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 16, padding: 28, maxWidth: 640 }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: "var(--muted)", marginBottom: 10 }}>
             {label} · Question {index + 1} of {questions.length}
           </div>
-          <h2 style={{ fontSize: 18, fontWeight: 700, color: "#1e293b", marginBottom: 20 }}>{questions[index].prompt}</h2>
+          <h2 style={{ fontSize: 18, fontWeight: 700, color: "var(--text)", marginBottom: 20 }}>{questions[index].prompt}</h2>
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {questions[index].options.map((opt, i) => {
               const isSelected = selected === i;
               const isCorrectOpt = feedback && i === feedback.correctIndex;
               const isWrongSelected = feedback && isSelected && !feedback.isCorrect;
-              const bg = isCorrectOpt ? "#ecfdf5" : isWrongSelected ? "#fef2f2" : isSelected ? "#eef2ff" : "#f8fafc";
-              const border = isCorrectOpt ? "#059669" : isWrongSelected ? "#dc2626" : isSelected ? "#6366f1" : "#e2e8f0";
+              const bg = isCorrectOpt ? "#ecfdf5" : isWrongSelected ? "#fef2f2" : isSelected ? "#eef2ff" : "var(--bg)";
+              const border = isCorrectOpt ? "#059669" : isWrongSelected ? "#dc2626" : isSelected ? "#6366f1" : "var(--border)";
               return (
                 <button
                   key={i}
                   onClick={() => submitAnswer(i)}
                   disabled={!!feedback || answering}
-                  style={{ textAlign: "left", padding: "12px 16px", borderRadius: 10, border: `1.5px solid ${border}`, background: bg, color: "#1e293b", fontSize: 14, cursor: feedback ? "default" : "pointer" }}
+                  style={{ textAlign: "left", padding: "12px 16px", borderRadius: 10, border: `1.5px solid ${border}`, background: bg, color: "var(--text)", fontSize: 14, cursor: feedback ? "default" : "pointer" }}
                 >
                   {opt}
                 </button>
@@ -281,7 +281,7 @@ function AssessmentsContent() {
               <p style={{ fontWeight: 700, color: feedback.isCorrect ? "#059669" : "#dc2626", marginBottom: 4, fontSize: 14 }}>
                 {feedback.isCorrect ? "Correct!" : "Not quite."}
               </p>
-              {feedback.explanation && <p style={{ fontSize: 13, color: "#475569" }}>{feedback.explanation}</p>}
+              {feedback.explanation && <p style={{ fontSize: 13, color: "var(--muted)" }}>{feedback.explanation}</p>}
               <button
                 onClick={nextOrFinish}
                 style={{ marginTop: 12, padding: "9px 20px", borderRadius: 8, border: "none", background: "#6366f1", color: "#fff", fontWeight: 700, fontSize: 13, cursor: "pointer" }}
@@ -294,10 +294,10 @@ function AssessmentsContent() {
       )}
 
       {stage === "completed" && report && (
-        <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 16, padding: 32, textAlign: "center", maxWidth: 480 }}>
+        <div style={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 16, padding: 32, textAlign: "center", maxWidth: 480 }}>
           <div style={{ fontSize: 40, marginBottom: 12 }}>{report.score >= 80 ? "🏆" : report.score >= 50 ? "👍" : "📚"}</div>
-          <h2 style={{ fontSize: 24, fontWeight: 800, color: "#1e293b", marginBottom: 8 }}>{report.score}%</h2>
-          <p style={{ color: "#64748b", fontSize: 14, marginBottom: report.mistakes.length ? 20 : 24 }}>
+          <h2 style={{ fontSize: 24, fontWeight: 800, color: "var(--text)", marginBottom: 8 }}>{report.score}%</h2>
+          <p style={{ color: "var(--muted)", fontSize: 14, marginBottom: report.mistakes.length ? 20 : 24 }}>
             {report.correctCount} out of {report.totalQuestions} correct on <strong>{label}</strong>
             {report.score >= 80 ? " — mastery updated!" : ". Keep practicing this topic to improve mastery."}
           </p>
@@ -318,7 +318,7 @@ function AssessmentsContent() {
           )}
 
           <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
-            <Link href="/dashboard/curriculum" style={{ padding: "10px 20px", borderRadius: 8, background: "#f1f5f9", color: "#334155", fontWeight: 700, fontSize: 13, textDecoration: "none" }}>
+            <Link href="/dashboard/curriculum" style={{ padding: "10px 20px", borderRadius: 8, background: "var(--card-hover)", color: "var(--text)", fontWeight: 700, fontSize: 13, textDecoration: "none" }}>
               Back to Curriculum
             </Link>
             <Link href="/dashboard/assessments" style={{ padding: "10px 20px", borderRadius: 8, background: "#6366f1", color: "#fff", fontWeight: 700, fontSize: 13, textDecoration: "none" }}>
@@ -333,7 +333,7 @@ function AssessmentsContent() {
 
 export default function AssessmentsPage() {
   return (
-    <Suspense fallback={<div style={{ minHeight: "100vh", background: "#f8fafc" }} />}>
+    <Suspense fallback={<div style={{ minHeight: "100vh", background: "var(--bg)" }} />}>
       <AssessmentsContent />
     </Suspense>
   );

@@ -257,7 +257,7 @@ export default function AdminUploadPage() {
   // ─── 3. EARLY RETURNS (Authorized check) ────────────────────────────
   if (!isAuthorized) {
     return (
-      <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8fafc' }}>
+      <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg)' }}>
         <Loader2 size={32} color="#4f6ef7" style={{ animation: 'spin 1s linear infinite' }} />
         <style>{`@keyframes spin { 100% { transform: rotate(360deg); } }`}</style>
       </div>
@@ -270,33 +270,33 @@ export default function AdminUploadPage() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Lora:wght@500;600&display=swap');
 
-        .vw-admin-container { padding: 40px; max-width: 1200px; margin: 0 auto; font-family: 'DM Sans', sans-serif; color: #1e293b; }
+        .vw-admin-container { padding: 40px; max-width: 1200px; margin: 0 auto; font-family: 'DM Sans', sans-serif; color: var(--text); }
         @media (max-width: 640px) { .vw-admin-container { padding: 20px; } }
         .vw-admin-header { margin-bottom: 32px; }
-        .vw-admin-header h1 { font-size: 28px; font-weight: 700; font-family: 'Lora', serif; margin: 0 0 8px 0; color: #0f172a; }
-        .vw-admin-header p { color: #64748b; margin: 0; font-size: 15px; }
-        
-        .vw-admin-card { background: #fff; border-radius: 16px; border: 1px solid #e2e8f0; padding: 32px; box-shadow: 0 4px 24px rgba(0,0,0,0.02); }
-        
+        .vw-admin-header h1 { font-size: 28px; font-weight: 700; font-family: 'Lora', serif; margin: 0 0 8px 0; color: var(--text); }
+        .vw-admin-header p { color: var(--muted); margin: 0; font-size: 15px; }
+
+        .vw-admin-card { background: var(--card); border-radius: 16px; border: 1px solid var(--border); padding: 32px; box-shadow: 0 4px 24px rgba(0,0,0,0.02); }
+
         .vw-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 32px; }
         @media (max-width: 768px) { .vw-grid { grid-template-columns: 1fr; } }
-        
+
         .vw-form-group { display: flex; flex-direction: column; gap: 8px; }
-        .vw-form-label { font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; }
-        
-        .vw-input, .vw-select { padding: 12px 16px; border-radius: 10px; border: 2px solid #e2e8f0; background: #f8fafc; font-size: 14px; font-weight: 500; font-family: inherit; color: #1e293b; outline: none; transition: 0.2s; appearance: none; }
+        .vw-form-label { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+
+        .vw-input, .vw-select { padding: 12px 16px; border-radius: 10px; border: 2px solid var(--border); background: var(--input-bg); font-size: 14px; font-weight: 500; font-family: inherit; color: var(--text); outline: none; transition: 0.2s; appearance: none; }
         .vw-select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 10 6'%3E%3Cpath fill='%2364748b' d='M5 6L0 0h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 16px center; padding-right: 40px; }
-        .vw-input:focus, .vw-select:focus { border-color: #4f6ef7; background: #fff; box-shadow: 0 0 0 3px rgba(79,110,247,0.1); }
-        .vw-select:disabled { opacity: 0.6; cursor: not-allowed; background-color: #f1f5f9; border-color: #e2e8f0; }
-        
-        .vw-divider { border: 0; height: 1px; background: #e2e8f0; margin: 32px 0; }
-        
-        .vw-file-drop { border: 2px dashed #cbd5e1; border-radius: 16px; padding: 40px 20px; text-align: center; background: #f8fafc; position: relative; cursor: pointer; transition: 0.2s; margin-bottom: 32px; }
-        .vw-file-drop:hover { background: #f1f5f9; border-color: #94a3b8; }
+        .vw-input:focus, .vw-select:focus { border-color: #4f6ef7; background: var(--card); box-shadow: 0 0 0 3px rgba(79,110,247,0.1); }
+        .vw-select:disabled { opacity: 0.6; cursor: not-allowed; background-color: var(--card-hover); border-color: var(--border); }
+
+        .vw-divider { border: 0; height: 1px; background: var(--border); margin: 32px 0; }
+
+        .vw-file-drop { border: 2px dashed var(--border-hover); border-radius: 16px; padding: 40px 20px; text-align: center; background: var(--input-bg); position: relative; cursor: pointer; transition: 0.2s; margin-bottom: 32px; }
+        .vw-file-drop:hover { background: var(--card-hover); border-color: var(--muted); }
         .vw-file-input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; z-index: 2; }
         .vw-file-content { display: flex; flex-direction: column; align-items: center; gap: 12px; pointer-events: none; }
-        .vw-file-title { font-weight: 600; font-size: 16px; color: #1e293b; margin: 0; }
-        .vw-file-sub { font-size: 13px; color: #64748b; margin: 0; }
+        .vw-file-title { font-weight: 600; font-size: 16px; color: var(--text); margin: 0; }
+        .vw-file-sub { font-size: 13px; color: var(--muted); margin: 0; }
         
         .vw-status { padding: 16px 20px; border-radius: 12px; margin-bottom: 24px; display: flex; gap: 12px; align-items: center; font-size: 14px; font-weight: 600; line-height: 1.5; }
         .vw-status.uploading { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
@@ -314,10 +314,10 @@ export default function AdminUploadPage() {
           <h1>Knowledge Base Admin</h1>
           <p>Upload textbook PDFs to train the Viswasimi AI Tutor.</p>
           <div style={{ marginTop: 12, display: "flex", gap: 8 }}>
-            <span style={{ fontSize: 13, fontWeight: 700, color: "#4f6ef7", padding: "6px 12px", borderRadius: 8, background: "#eef2ff" }}>
+            <span style={{ fontSize: 13, fontWeight: 700, color: "#4f6ef7", padding: "6px 12px", borderRadius: 8, background: "rgba(79,110,247,0.10)" }}>
               Content
             </span>
-            <Link href="/dashboard/admin/students" style={{ fontSize: 13, fontWeight: 700, color: "#64748b", textDecoration: "none", padding: "6px 12px", borderRadius: 8 }}>
+            <Link href="/dashboard/admin/students" style={{ fontSize: 13, fontWeight: 700, color: "var(--muted)", textDecoration: "none", padding: "6px 12px", borderRadius: 8 }}>
               Students &amp; Usage
             </Link>
           </div>
@@ -436,13 +436,13 @@ export default function AdminUploadPage() {
           <div className="vw-admin-card" style={{ marginTop: 24 }}>
             <div className="vw-form-group" style={{ marginBottom: 20 }}>
               <label className="vw-form-label">Topic Video (optional)</label>
-              <p style={{ fontSize: 13, color: "#64748b", margin: "6px 0 0" }}>
+              <p style={{ fontSize: 13, color: "var(--muted)", margin: "6px 0 0" }}>
                 Give <strong>{selectedTopic.name}</strong> an explainer video the student can watch
                 alongside the AI tutor. Upload a short clip (stored in Supabase Storage, max {MAX_VIDEO_MB} MB)
                 or paste a hosted link (YouTube, Vimeo, etc.) for longer videos.
               </p>
               {selectedTopic.videoUrl && (
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 10, fontSize: 13, fontWeight: 600, color: "#065f46" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 10, fontSize: 13, fontWeight: 600, color: "#10b981" }}>
                   <CheckCircle size={16} />
                   Video attached
                   <a href={selectedTopic.videoUrl} target="_blank" rel="noopener noreferrer" style={{ color: "#4f6ef7", fontWeight: 600 }}>
@@ -452,7 +452,7 @@ export default function AdminUploadPage() {
                     type="button"
                     onClick={handleVideoClear}
                     disabled={videoStatus === "saving"}
-                    style={{ marginLeft: "auto", background: "none", border: "none", color: "#991b1b", cursor: "pointer", display: "flex", alignItems: "center", gap: 4, fontSize: 13, fontWeight: 600 }}
+                    style={{ marginLeft: "auto", background: "none", border: "none", color: "#ef4444", cursor: "pointer", display: "flex", alignItems: "center", gap: 4, fontSize: 13, fontWeight: 600 }}
                   >
                     <Trash2 size={14} /> Remove
                   </button>

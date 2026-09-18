@@ -14,7 +14,7 @@ export function BrandLogo({
   textSize = 20,
   showText = true,
   subtitle,
-  textColor = "#111827",
+  textColor = "var(--text)",
 }: BrandLogoProps) {
   return (
     <div style={{ display: "inline-flex", alignItems: "center", gap: 10 }}>

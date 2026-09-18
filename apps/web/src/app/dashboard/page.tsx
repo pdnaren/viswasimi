@@ -138,10 +138,10 @@ export default function DashboardPage() {
 
         .db-page {
           font-family: 'Outfit', sans-serif;
-          color: #1a1f2e;
+          color: var(--text);
           min-height: 100%;
           padding: 32px 36px 48px;
-          background: #f5f7ff;
+          background: var(--bg);
           max-width: 1200px;
         }
 
@@ -157,11 +157,11 @@ export default function DashboardPage() {
         }
         .db-name {
           font-family: 'DM Serif Display', serif;
-          font-size: 34px; color: #1a1f2e;
+          font-size: 34px; color: var(--text);
           margin: 0 0 6px; line-height: 1.1;
         }
         .db-sub {
-          font-size: 14.5px; color: #64748b; margin: 0;
+          font-size: 14.5px; color: var(--muted); margin: 0;
         }
 
         /* ── Stats ── */
@@ -174,7 +174,7 @@ export default function DashboardPage() {
         @media (max-width: 900px) { .db-stats-grid { grid-template-columns: repeat(2,1fr); } }
 
         .stat-card {
-          background: #fff;
+          background: var(--card);
           border-radius: 16px;
           padding: 22px 20px 18px;
           box-shadow: 0 2px 12px rgba(0,0,0,0.05);
@@ -192,10 +192,10 @@ export default function DashboardPage() {
         }
         .stat-value {
           font-size: 32px; font-weight: 800; line-height: 1;
-          color: #1a1f2e; margin-bottom: 5px;
+          color: var(--text); margin-bottom: 5px;
         }
         .stat-label {
-          font-size: 12.5px; color: #94a3b8; font-weight: 500;
+          font-size: 12.5px; color: var(--muted); font-weight: 500;
         }
 
         /* ── Section heading ── */
@@ -205,7 +205,7 @@ export default function DashboardPage() {
           margin-bottom: 18px;
         }
         .db-section-title {
-          font-size: 18px; font-weight: 700; color: #1a1f2e; margin: 0;
+          font-size: 18px; font-weight: 700; color: var(--text); margin: 0;
         }
         .db-section-link {
           font-size: 13px; font-weight: 600; color: #6366f1;
@@ -224,7 +224,7 @@ export default function DashboardPage() {
         @media (max-width: 560px) { .topics-grid { grid-template-columns: 1fr; } }
 
         .topic-card {
-          background: #fff;
+          background: var(--card);
           border-radius: 14px;
           padding: 18px 18px 16px;
           box-shadow: 0 2px 10px rgba(0,0,0,0.05);
@@ -245,19 +245,19 @@ export default function DashboardPage() {
           padding: 3px 9px; border-radius: 20px;
           text-transform: uppercase; letter-spacing: 0.4px;
         }
-        .topic-duration { font-size: 12px; color: #94a3b8; }
+        .topic-duration { font-size: 12px; color: var(--muted); }
         .topic-name {
           font-size: 14.5px; font-weight: 700;
-          color: #1a1f2e; margin-bottom: 4px; line-height: 1.3;
+          color: var(--text); margin-bottom: 4px; line-height: 1.3;
         }
         .topic-meta {
-          font-size: 12px; color: #94a3b8; margin-bottom: 14px;
+          font-size: 12px; color: var(--muted); margin-bottom: 14px;
         }
         .mastery-bar-wrap {
           display: flex; align-items: center; gap: 10px;
         }
         .mastery-bar-bg {
-          flex: 1; height: 5px; border-radius: 3px; background: #f1f5f9;
+          flex: 1; height: 5px; border-radius: 3px; background: var(--border);
         }
         .mastery-bar-fill {
           height: 100%; border-radius: 3px;
@@ -268,7 +268,7 @@ export default function DashboardPage() {
         /* ── Empty / Error / Loading ── */
         .db-empty {
           text-align: center; padding: 48px 24px;
-          color: #94a3b8; font-size: 14px;
+          color: var(--muted); font-size: 14px;
         }
         .db-error {
           padding: 16px 20px; border-radius: 12px;
@@ -276,7 +276,7 @@ export default function DashboardPage() {
           color: #dc2626; font-size: 14px; margin-bottom: 24px;
         }
         .db-skeleton {
-          background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+          background: linear-gradient(90deg, var(--border) 25%, var(--border-hover) 50%, var(--border) 75%);
           background-size: 200% 100%;
           animation: shimmer 1.4s infinite;
           border-radius: 12px;

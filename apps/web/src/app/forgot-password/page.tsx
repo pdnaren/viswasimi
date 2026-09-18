@@ -59,8 +59,8 @@ export default function ForgotPasswordPage() {
   const inputStyle: React.CSSProperties = {
     width: "100%",
     padding: "12px 14px",
-    background: "#f9fafb",
-    border: `1px solid rgba(0,0,0,0.10)`,
+    background: "var(--input-bg)",
+    border: `1px solid ${C.border}`,
     borderRadius: 10,
     color: C.text,
     fontSize: 14,
@@ -114,8 +114,8 @@ export default function ForgotPasswordPage() {
           </div>
 
           <div style={{
-            background: "#f9fafb",
-            border: `1px solid rgba(0,0,0,0.07)`,
+            background: "var(--input-bg)",
+            border: `1px solid ${C.border}`,
             borderRadius: 12, padding: "14px 18px",
             textAlign: "left", marginBottom: 24,
           }}>
